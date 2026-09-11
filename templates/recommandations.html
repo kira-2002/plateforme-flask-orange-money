@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}Recommandations — Orange Money{% endblock %}
+
+{% block content %}
+
+<div class="banniere-page">
+    <h1><i class="bi bi-lightbulb-fill"></i> Recommandations automatiques</h1>
+    <p>Actions marketing personnalisées par segment et par niveau de risque</p>
+</div>
+
+<div class="carte-metrique text-start">
+    <ul class="nav nav-tabs mb-3">
+        <li class="nav-item">
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-guide" type="button">📖 Guide par segment</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-express" type="button">🎯 Recommandation express</button>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        <!-- ── Guide par segment (accordéon) ── -->
+        <div class="tab-pane fade show active" id="tab-guide">
+            <div class="accordion" id="accordionSegments">
+                {% for s in segments_info %}
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button {% if not loop.first %}collapsed{% endif %}" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#collapse{{ loop.index }}">
+                            {{ s.icone }}&nbsp;<strong>{{ s.nom }}</strong>&nbsp;—&nbsp;{{ s.taille }} utilisateurs ({{ s.taux_fidelite }}% fidèles)
+                        </button>
+                    </h2>
+                    <div id="collapse{{ loop.index }}" class="accordion-collapse collapse {% if loop.first %}show{% endif %}"
+                         data-bs-parent="#accordionSegments">
+                        <div class="accordion-body">
+                            <div class="row">
+                                <div class="col-md-5">
+                                    <p><strong>📋 Diagnostic</strong><br>{{ s.diagnostic }}</p>
+                                    <p><strong>🎯 Objectif</strong><br>{{ s.objectif }}</p>
+                                </div>
+                                <div class="col-md-7">
+                                    <strong>✅ Actions recommandées</strong>
+                                    <ul>
+                                        {% for a in s.actions %}
+                                        <li>{{ a }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- ── Recommandation express ── -->
+        <div class="tab-pane fade" id="tab-express">
+            <p class="text-muted small">Sélectionnez un segment et un niveau de risque pour obtenir une recommandation combinée, instantanément.</p>
+
+            <div class="row g-2 mb-3">
+                <div class="col-md-5">
+                    <label class="form-label small">Segment de l'utilisateur</label>
+                    <select class="form-select" id="segmentExpress">
+                        {% for s in segments_info %}
+                        <option value="{{ s.nom }}">{{ s.nom }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label small">Niveau de risque de churn</label>
+                    <select class="form-select" id="risqueExpress">
+                        <option value="faible">Faible</option>
+                        <option value="modere" selected>Modéré</option>
+                        <option value="eleve">Élevé</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button class="btn btn-om w-100" onclick="genererRecommandation()">
+                        <i class="bi bi-lightbulb"></i> Générer
+                    </button>
+                </div>
+            </div>
+
+            <div id="resultatExpress"></div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const recommandations = {{ recommandations_json | tojson }};
+
+const messagesRisque = {
+    eleve: { classe: 'alert-danger', texte: '🔴 Priorité haute — action à engager sous 48h. Recommandé : contact direct par le service client.' },
+    modere: { classe: 'alert-warning', texte: '🟠 Priorité moyenne — à intégrer dans la prochaine campagne ciblée.' },
+    faible: { classe: 'alert-success', texte: '🟢 Priorité normale — suivi standard suffisant.' }
+};
+
+function genererRecommandation() {
+    const segment = document.getElementById('segmentExpress').value;
+    const risque = document.getElementById('risqueExpress').value;
+    const c = recommandations[segment];
+    const m = messagesRisque[risque];
+
+    const actionsHtml = c.actions.map(a => `<li>${a}</li>`).join('');
+
+    document.getElementById('resultatExpress').innerHTML = `
+        <div class="encadre-info mb-2">
+            <h5>${c.icone} ${segment}</h5>
+            <p><strong>Diagnostic :</strong> ${c.diagnostic}</p>
+            <p><strong>Objectif :</strong> ${c.objectif}</p>
+        </div>
+        <div class="alert ${m.classe}">${m.texte}</div>
+        <h6>✅ Actions recommandées</h6>
+        <ul>${actionsHtml}</ul>
+    `;
+}
+
+// Génère une première recommandation par défaut à l'ouverture de l'onglet
+document.addEventListener('DOMContentLoaded', genererRecommandation);
+</script>
+{% endblock %}

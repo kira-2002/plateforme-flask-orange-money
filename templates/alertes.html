@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}Alertes clients à risque — Orange Money{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/datatables.net-bs5@1.13.11/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/datatables.net-responsive-bs5@2.5.1/css/responsive.bootstrap5.min.css">
+{% endblock %}
+
+{% block content %}
+
+<div class="banniere-page">
+    <h1><i class="bi bi-exclamation-triangle-fill"></i> Alertes et surveillance des clients à risque</h1>
+    <p>Identifier proactivement les utilisateurs susceptibles de se désengager</p>
+</div>
+
+<!-- ── Compteurs ── -->
+<div class="row g-3 mb-3">
+    <div class="col-6 col-md-3">
+        <div class="carte-metrique"><div class="icone">👥</div><div class="valeur">{{ nb_total }}</div><div class="label">Clients surveillés</div></div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="carte-metrique rouge"><div class="icone">🔴</div><div class="valeur">{{ nb_eleve }}</div><div class="label">Alerte élevée (&gt;70%)</div></div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="carte-metrique"><div class="icone">🟠</div><div class="valeur">{{ nb_modere }}</div><div class="label">Alerte modérée (40-70%)</div></div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="carte-metrique vert"><div class="icone">🟢</div><div class="valeur">{{ nb_faible }}</div><div class="label">Risque faible (&lt;40%)</div></div>
+    </div>
+</div>
+
+{% if nb_captifs_risque > 0 %}
+<div class="alert alert-warning">
+    ⚡ <strong>{{ nb_captifs_risque }} utilisateur(s)</strong> du segment "Captifs Insatisfaits" sont en alerte rouge — ce profil combine usage fréquent et forte probabilité de départ, à traiter en priorité absolue.
+</div>
+{% endif %}
+
+<!-- ── Filtres + Export ── -->
+<div class="carte-metrique text-start mb-3">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label small mb-1">Filtrer par segment</label>
+            <select class="form-select form-select-sm" id="filtreSegment">
+                <option value="">Tous les segments</option>
+                {% for s in liste_segments %}
+                <option value="{{ s }}">{{ s }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label small mb-1">Filtrer par niveau d'alerte</label>
+            <select class="form-select form-select-sm" id="filtreNiveau">
+                <option value="">Tous les niveaux</option>
+                <option value="🔴 Élevé">🔴 Élevé</option>
+                <option value="🟠 Modéré">🟠 Modéré</option>
+                <option value="🟢 Faible">🟢 Faible</option>
+            </select>
+        </div>
+        <div class="col-md-4">
+            <button class="btn btn-om w-100" id="btnExportCsv">
+                <i class="bi bi-download"></i> Exporter en CSV
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ── Tableau ── -->
+<div class="carte-metrique text-start">
+    <div class="table-responsive">
+        <table class="table table-om table-striped" id="tableAlertes" style="width:100%;">
+            <thead>
+                <tr>
+                    <th>ID</th><th>Score de risque</th><th>Niveau</th><th>Segment</th>
+                    <th>Satisfaction</th><th>Fréquence</th><th>Ancienneté</th><th>Frais</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for l in lignes %}
+                <tr>
+                    <td>{{ l.id }}</td>
+                    <td data-order="{{ l.score }}">
+                        <div class="progress" style="height:18px;">
+                            <div class="progress-bar {% if l.niveau=='eleve' %}bg-danger{% elif l.niveau=='modere' %}bg-warning{% else %}bg-success{% endif %}"
+                                 style="width:{{ l.score }}%;">{{ l.score }}%</div>
+                        </div>
+                    </td>
+                    <td>
+                        {% if l.niveau == 'eleve' %}🔴 Élevé{% elif l.niveau == 'modere' %}🟠 Modéré{% else %}🟢 Faible{% endif %}
+                    </td>
+                    <td>{{ l.segment }}</td>
+                    <td>{{ l.satisfaction }}</td>
+                    <td>{{ l.frequence }}</td>
+                    <td>{{ l.anciennete }}</td>
+                    <td>{{ l.frais }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/datatables.net@1.13.11/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/datatables.net-bs5@1.13.11/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/datatables.net-responsive@2.5.1/js/dataTables.responsive.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/datatables.net-responsive-bs5@2.5.1/js/responsive.bootstrap5.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    const table = $('#tableAlertes').DataTable({
+        responsive: true,
+        order: [[1, 'desc']],
+        pageLength: 15,
+        language: {
+            search: "Rechercher :", lengthMenu: "Afficher _MENU_ lignes",
+            info: "_START_ à _END_ sur _TOTAL_ lignes", paginate: { previous: "Préc.", next: "Suiv." }
+        }
+    });
+
+    // Filtres personnalisés (colonnes Segment=3, Niveau=2)
+    document.getElementById('filtreSegment').addEventListener('change', function() {
+        table.column(3).search(this.value).draw();
+    });
+    document.getElementById('filtreNiveau').addEventListener('change', function() {
+        table.column(2).search(this.value).draw();
+    });
+
+    // Export CSV côté client (des lignes actuellement filtrées/visibles)
+    document.getElementById('btnExportCsv').addEventListener('click', function() {
+        let csv = 'ID;Score de risque;Niveau;Segment;Satisfaction;Frequence;Anciennete;Frais\n';
+        table.rows({ search: 'applied' }).every(function() {
+            const d = this.data();
+            const score = $(d[1]).find('.progress-bar').text().replace('%','');
+            const niveau = $(d[2]).text().trim();
+            csv += `${d[0]};${score};${niveau};${d[3]};${d[4]};${d[5]};${d[6]};${d[7]}\n`;
+        });
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const lien = document.createElement('a');
+        lien.href = URL.createObjectURL(blob);
+        lien.download = 'clients_a_risque.csv';
+        lien.click();
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,59 @@
+{
+  "colonnes_modele": [
+    "tranche_age",
+    "sexe",
+    "situation_professionnelle",
+    "utilise_orange_money",
+    "anciennete_usage",
+    "frequence_usage",
+    "sat_globale",
+    "perception_frais",
+    "presence_probleme",
+    "wave_usage",
+    "operateur_prefere",
+    "motif_principal",
+    "pb_aucun",
+    "pb_autre",
+    "pb_lenteur",
+    "pb_probleme_de_reseau",
+    "pb_service_client",
+    "pb_transaction_echouee",
+    "serv_achat_de_credit",
+    "serv_paiement_de_factures",
+    "serv_paiement_marchand",
+    "serv_reception_dargent",
+    "serv_transfert_dargent"
+  ],
+  "colonnes_clustering": [
+    "sat_globale",
+    "frequence_usage",
+    "anciennete_usage",
+    "perception_frais"
+  ],
+  "colonnes_num_scaler": [
+    "tranche_age",
+    "anciennete_usage",
+    "frequence_usage",
+    "sat_globale",
+    "perception_frais"
+  ],
+  "imputation": {
+    "tranche_age": 2,
+    "anciennete_usage": 4,
+    "frequence_usage": 1,
+    "sat_globale": 3,
+    "perception_frais": 3,
+    "sexe": 1,
+    "situation_professionnelle": 5,
+    "operateur_prefere": 2,
+    "motif_principal": 1
+  },
+  "noms_clusters": {
+    "0": "Utilisateurs à Risque",
+    "1": "Fidèles Engagés",
+    "2": "Captifs Insatisfaits",
+    "3": "Fidèles Passifs",
+    "4": "Nouveaux Utilisateurs"
+  },
+  "k_optimal": 5
+}

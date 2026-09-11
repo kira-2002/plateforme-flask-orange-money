@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block title %}Tableau de bord — Orange Money{% endblock %}
+
+{% block content %}
+
+<div class="banniere-page">
+    <h1><i class="bi bi-bar-chart-fill"></i> Tableau de bord principal</h1>
+    <p>Vue d'ensemble des indicateurs de fidélité</p>
+</div>
+
+<!-- ── Indicateurs clés ── -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="carte-metrique">
+            <div class="icone">👥</div>
+            <div class="valeur">{{ stats.nb_utilisateurs }}</div>
+            <div class="label">Utilisateurs analysés</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="carte-metrique vert">
+            <div class="icone">💚</div>
+            <div class="valeur">{{ stats.taux_fidelite }}%</div>
+            <div class="label">Taux de fidélité</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="carte-metrique">
+            <div class="icone">⭐</div>
+            <div class="valeur">{{ satisfaction_moyenne }}/5</div>
+            <div class="label">Satisfaction moyenne</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="carte-metrique rouge">
+            <div class="icone">⚠️</div>
+            <div class="valeur">{{ stats.nb_churners }}</div>
+            <div class="label">Churners</div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Répartition Fidèles/Churners + Segments ── -->
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="carte-metrique text-start">
+            <h5 class="mb-3">🟢 Répartition Fidèles / Churners</h5>
+            <div class="chart-container">
+                <canvas id="chartFidelite"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="carte-metrique text-start">
+            <h5 class="mb-3">🧩 Répartition par segment</h5>
+            <div class="chart-container">
+                <canvas id="chartSegments"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Taux de fidélité par segment ── -->
+<div class="row g-3 mb-4">
+    <div class="col-12">
+        <div class="carte-metrique text-start">
+            <h5 class="mb-3">📊 Taux de fidélité par segment</h5>
+            <div class="chart-container-large">
+                <canvas id="chartTauxSegments"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Satisfaction et perception des frais ── -->
+<div class="row g-3">
+    <div class="col-md-6">
+        <div class="carte-metrique text-start">
+            <h5 class="mb-3">😊 Distribution de la satisfaction</h5>
+            <div class="chart-container">
+                <canvas id="chartSatisfaction"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="carte-metrique text-start">
+            <h5 class="mb-3">💰 Perception des frais</h5>
+            <div class="chart-container">
+                <canvas id="chartFrais"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ── Données injectées depuis Flask (calculées côté serveur) ──
+const repartitionFid = {{ repartition_fid | tojson }};
+const repartitionSegments = {{ repartition_segments | tojson }};
+const tauxSegments = {{ taux_segments | tojson }};
+const distSatisfaction = {{ distribution_satisfaction | tojson }};
+const distFrais = {{ distribution_frais | tojson }};
+
+// 1. Camembert Fidèles/Churners
+new Chart(document.getElementById('chartFidelite'), {
+    type: 'doughnut',
+    data: {
+        labels: repartitionFid.labels,
+        datasets: [{ data: repartitionFid.data, backgroundColor: repartitionFid.colors }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+});
+
+// 2. Barres répartition par segment
+new Chart(document.getElementById('chartSegments'), {
+    type: 'bar',
+    data: {
+        labels: repartitionSegments.labels,
+        datasets: [{ label: "Nombre d'utilisateurs", data: repartitionSegments.data, backgroundColor: repartitionSegments.colors }]
+    },
+    options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { x: { ticks: { font: { size: 10 } } } }
+    }
+});
+
+// 3. Barres horizontales taux de fidélité par segment
+new Chart(document.getElementById('chartTauxSegments'), {
+    type: 'bar',
+    data: {
+        labels: tauxSegments.labels,
+        datasets: [{ label: 'Taux de fidélité (%)', data: tauxSegments.data, backgroundColor: tauxSegments.colors }]
+    },
+    options: {
+        responsive: true, maintainAspectRatio: false,
+        indexAxis: 'y',
+        plugins: { legend: { display: false } },
+        scales: { x: { min: 0, max: 100 } }
+    }
+});
+
+// 4. Distribution satisfaction (groupé Fidèle/Churner)
+new Chart(document.getElementById('chartSatisfaction'), {
+    type: 'bar',
+    data: {
+        labels: distSatisfaction.labels,
+        datasets: [
+            { label: 'Fidèle', data: distSatisfaction.fideles, backgroundColor: '#2E7D32' },
+            { label: 'Churner', data: distSatisfaction.churners, backgroundColor: '#C62828' }
+        ]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+});
+
+// 5. Distribution perception des frais (groupé Fidèle/Churner)
+new Chart(document.getElementById('chartFrais'), {
+    type: 'bar',
+    data: {
+        labels: distFrais.labels,
+        datasets: [
+            { label: 'Fidèle', data: distFrais.fideles, backgroundColor: '#2E7D32' },
+            { label: 'Churner', data: distFrais.churners, backgroundColor: '#C62828' }
+        ]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+});
+</script>
+{% endblock %}

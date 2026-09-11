@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}Analyse des facteurs — Orange Money{% endblock %}
+
+{% block content %}
+
+<div class="banniere-page">
+    <h1><i class="bi bi-search"></i> Analyse des facteurs de fidélité</h1>
+    <p>Comprendre ce qui influence réellement la fidélité des utilisateurs</p>
+</div>
+
+<div class="carte-metrique text-start">
+    <ul class="nav nav-tabs mb-3" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-shap" type="button">
+                🎯 Importance SHAP
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-rf" type="button">
+                🌳 Importance Random Forest
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-corr" type="button">
+                📈 Corrélations
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        <!-- ── Onglet SHAP ── -->
+        <div class="tab-pane fade show active" id="tab-shap">
+            <p class="text-muted small">
+                Mesure, pour chaque variable, son impact moyen sur les prédictions du modèle Random Forest.
+            </p>
+            <div class="chart-container-xl">
+                <canvas id="chartShapGlobal"></canvas>
+            </div>
+        </div>
+
+        <!-- ── Onglet Random Forest ── -->
+        <div class="tab-pane fade" id="tab-rf">
+            <p class="text-muted small">
+                Contribution de chaque variable à la réduction de l'impureté de Gini dans les arbres du Random Forest.
+                <span class="text-success">Vert</span> = au-dessus de la médiane, <span class="text-danger">rouge</span> = en-dessous.
+            </p>
+            <div class="chart-container-xl">
+                <canvas id="chartRfImportance"></canvas>
+            </div>
+        </div>
+
+        <!-- ── Onglet Corrélations ── -->
+        <div class="tab-pane fade" id="tab-corr">
+            <p class="text-muted small">Corrélation de Spearman entre les variables numériques principales.</p>
+            <div class="table-responsive">
+                <table class="table table-bordered text-center" style="max-width: 700px;">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            {% for label in labels_colonnes_corr %}
+                            <th class="small">{{ label }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ligne in heatmap %}
+                        <tr>
+                            <th class="small">{{ ligne.label }}</th>
+                            {% for cellule in ligne.cellules %}
+                            <td style="background-color: {{ cellule.couleur }};">{{ cellule.valeur }}</td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const shapLabels = {{ shap_labels | tojson }};
+const shapValeurs = {{ shap_valeurs | tojson }};
+const rfLabels = {{ rf_labels | tojson }};
+const rfValeurs = {{ rf_valeurs | tojson }};
+const rfCouleurs = {{ rf_couleurs | tojson }};
+
+new Chart(document.getElementById('chartShapGlobal'), {
+    type: 'bar',
+    data: {
+        labels: shapLabels,
+        datasets: [{ data: shapValeurs, backgroundColor: '#FF7900' }]
+    },
+    options: {
+        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+            x: { title: { display: true, text: 'Importance SHAP moyenne (|valeur|)' } },
+            y: { ticks: { font: { size: 10 } } }
+        }
+    }
+});
+
+new Chart(document.getElementById('chartRfImportance'), {
+    type: 'bar',
+    data: {
+        labels: rfLabels,
+        datasets: [{ data: rfValeurs, backgroundColor: rfCouleurs }]
+    },
+    options: {
+        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+            x: { title: { display: true, text: 'Importance (Gini)' } },
+            y: { ticks: { font: { size: 10 } } }
+        }
+    }
+});
+</script>
+{% endblock %}

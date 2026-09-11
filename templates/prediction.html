@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+
+{% block title %}Prédiction individuelle — Orange Money{% endblock %}
+
+{% block content %}
+
+<div class="banniere-page">
+    <h1><i class="bi bi-magic"></i> Prédiction individuelle</h1>
+    <p>Estimer la probabilité de fidélité d'un utilisateur</p>
+</div>
+
+<div class="row g-3">
+    <!-- ── Formulaire ── -->
+    <div class="col-lg-5">
+        <div class="carte-metrique text-start">
+            <h5 class="mb-3">📝 Profil de l'utilisateur</h5>
+            <form id="formPrediction">
+
+                <div class="row g-2">
+                    <div class="col-6">
+                        <label class="form-label small mb-1">Ancienneté</label>
+                        <select class="form-select form-select-sm mb-2" id="anciennete_usage">
+                            <option value="1">Moins de 6 mois</option>
+                            <option value="2">6 mois – 1 an</option>
+                            <option value="3" selected>1 – 3 ans</option>
+                            <option value="4">Plus de 3 ans</option>
+                        </select>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small mb-1">Fréquence</label>
+                        <select class="form-select form-select-sm mb-2" id="frequence_usage">
+                            <option value="1" selected>Rarement</option>
+                            <option value="2">1 fois/semaine</option>
+                            <option value="3">Plusieurs fois/sem.</option>
+                            <option value="4">Tous les jours</option>
+                        </select>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small mb-1">Perception des frais</label>
+                        <select class="form-select form-select-sm mb-2" id="perception_frais">
+                            <option value="1">Très élevés</option>
+                            <option value="2">Élevés</option>
+                            <option value="3" selected>Acceptables</option>
+                            <option value="4">Faibles</option>
+                        </select>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small mb-1">Tranche d'âge</label>
+                        <select class="form-select form-select-sm mb-2" id="tranche_age">
+                            <option value="1">Moins de 18 ans</option>
+                            <option value="2" selected>18-25 ans</option>
+                            <option value="3">26-35 ans</option>
+                            <option value="4">36-45 ans</option>
+                            <option value="5">Plus de 45 ans</option>
+                        </select>
+                    </div>
+                </div>
+
+                <label class="form-label small mb-1">Satisfaction globale : <strong id="valSat">3</strong>/5</label>
+                <input type="range" class="form-range mb-2" min="1" max="5" value="3" id="sat_globale"
+                       oninput="document.getElementById('valSat').innerText = this.value">
+
+                <label class="form-label small mb-1">Motif principal d'utilisation</label>
+                <select class="form-select form-select-sm mb-2" id="motif_principal">
+                    <option value="0">Disponibilité des points</option>
+                    <option value="1" selected>Fiabilité</option>
+                    <option value="2">Habitude</option>
+                    <option value="3">Promotions</option>
+                    <option value="4">Réseau</option>
+                </select>
+
+                <div class="row g-1 mb-2">
+                    <div class="col-12">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="utilise_orange_money" checked>
+                            <label class="form-check-label small">Utilise Orange Money</label>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="wave_usage" checked>
+                            <label class="form-check-label small">Utilise aussi Wave</label>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="presence_probleme">
+                            <label class="form-check-label small">A eu un problème récemment</label>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-om w-100">
+                    <i class="bi bi-magic"></i> Prédire la fidélité
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ── Résultats ── -->
+    <div class="col-lg-7">
+        <div id="zoneResultats" style="display:none;">
+
+            <div class="row g-3 mb-3">
+                <div class="col-4">
+                    <div class="carte-metrique" id="carteResultat">
+                        <div class="icone">🎯</div>
+                        <div class="valeur" id="resPrediction">--</div>
+                        <div class="label">Prédiction</div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="carte-metrique vert">
+                        <div class="icone">💚</div>
+                        <div class="valeur" id="resProbaFidele">--%</div>
+                        <div class="label">Probabilité de fidélité</div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="carte-metrique" id="carteRisque">
+                        <div class="icone">⚠️</div>
+                        <div class="valeur" id="resProbaChurn">--%</div>
+                        <div class="label">Score de risque</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="carte-metrique text-start mb-3">
+                <h6>Niveau de risque de désengagement</h6>
+                <div class="progress" style="height: 22px;">
+                    <div class="progress-bar" id="barreRisque" role="progressbar" style="width:0%"></div>
+                </div>
+                <div id="messageRisque" class="mt-2"></div>
+            </div>
+
+            <div class="encadre-info mb-3">
+                <strong>🧩 Segment identifié :</strong> <span id="resSegment">--</span>
+            </div>
+
+            <div class="carte-metrique text-start">
+                <h6 class="mb-2">🔍 Explication SHAP (top 8 variables)</h6>
+                <div class="chart-container-large">
+                    <canvas id="chartShap"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div id="zoneAttente" class="text-center text-muted py-5">
+            <i class="bi bi-arrow-left-circle" style="font-size:2rem;"></i>
+            <p class="mt-2">Remplissez le formulaire et cliquez sur "Prédire" pour voir les résultats.</p>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let chartShapInstance = null;
+
+document.getElementById('formPrediction').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const payload = {
+        anciennete_usage: document.getElementById('anciennete_usage').value,
+        frequence_usage: document.getElementById('frequence_usage').value,
+        sat_globale: document.getElementById('sat_globale').value,
+        perception_frais: document.getElementById('perception_frais').value,
+        tranche_age: document.getElementById('tranche_age').value,
+        motif_principal: document.getElementById('motif_principal').value,
+        utilise_orange_money: document.getElementById('utilise_orange_money').checked ? 1 : 0,
+        wave_usage: document.getElementById('wave_usage').checked ? 1 : 0,
+        presence_probleme: document.getElementById('presence_probleme').checked ? 1 : 0,
+    };
+
+    const bouton = e.target.querySelector('button[type="submit"]');
+    bouton.disabled = true;
+    bouton.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Calcul en cours...';
+
+    try {
+        const reponse = await fetch('/api/predire', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const resultat = await reponse.json();
+        afficherResultats(resultat);
+    } catch (err) {
+        alert("Erreur lors de la prédiction : " + err);
+    } finally {
+        bouton.disabled = false;
+        bouton.innerHTML = '<i class="bi bi-magic"></i> Prédire la fidélité';
+    }
+});
+
+function afficherResultats(r) {
+    document.getElementById('zoneAttente').style.display = 'none';
+    document.getElementById('zoneResultats').style.display = 'block';
+
+    document.getElementById('resPrediction').innerText = r.prediction;
+    document.getElementById('resProbaFidele').innerText = r.proba_fidele + '%';
+    document.getElementById('resProbaChurn').innerText = r.proba_churn + '%';
+    document.getElementById('resSegment').innerText = r.segment;
+
+    // Couleur de la carte prédiction/risque selon le résultat
+    const carteResultat = document.getElementById('carteResultat');
+    carteResultat.className = 'carte-metrique ' + (r.prediction === 'Fidèle' ? 'vert' : 'rouge');
+    const carteRisque = document.getElementById('carteRisque');
+    carteRisque.className = 'carte-metrique ' + (r.niveau_risque === 'eleve' ? 'rouge' : (r.niveau_risque === 'modere' ? '' : 'vert'));
+
+    // Barre de progression du risque
+    const barre = document.getElementById('barreRisque');
+    barre.style.width = r.proba_churn + '%';
+    const couleurs = { eleve: 'bg-danger', modere: 'bg-warning', faible: 'bg-success' };
+    barre.className = 'progress-bar ' + couleurs[r.niveau_risque];
+
+    const messages = {
+        eleve: '🔴 Risque élevé — intervention de rétention recommandée en priorité.',
+        modere: '🟠 Risque modéré — à surveiller.',
+        faible: '🟢 Risque faible — utilisateur globalement stable.'
+    };
+    document.getElementById('messageRisque').innerText = messages[r.niveau_risque];
+
+    // Graphique SHAP
+    if (chartShapInstance) chartShapInstance.destroy();
+    chartShapInstance = new Chart(document.getElementById('chartShap'), {
+        type: 'bar',
+        data: {
+            labels: r.shap_labels,
+            datasets: [{
+                data: r.shap_valeurs,
+                backgroundColor: r.shap_valeurs.map(v => v > 0 ? '#2E7D32' : '#C62828')
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } }
+        }
+    });
+}
+</script>
+{% endblock %}

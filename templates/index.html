@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Accueil — Orange Money Fidélité{% endblock %}
+
+{% block content %}
+
+<div class="banniere-page">
+    <h1><i class="bi bi-circle-fill"></i> Plateforme décisionnelle — Fidélité Orange Money</h1>
+    <p>Analyse et prédiction de la fidélité des utilisateurs — Mémoire M2 MIAGE</p>
+</div>
+
+<!-- ── Chargement d'un dataset personnalisé (point d'entrée principal) ── -->
+<div class="carte-metrique text-start mb-4">
+    <form method="POST" enctype="multipart/form-data" class="row g-2 align-items-end">
+        <div class="col-md-8">
+            <label class="form-label small mb-1">
+                <i class="bi bi-upload"></i> Charger votre propre dataset (même format) — sinon le dataset par défaut (642 utilisateurs) est utilisé
+            </label>
+            <input type="file" name="fichier_dataset" accept=".csv" class="form-control form-control-sm">
+        </div>
+        <div class="col-md-4">
+            <button type="submit" class="btn btn-om w-100">
+                <i class="bi bi-arrow-repeat"></i> Charger et explorer
+            </button>
+        </div>
+    </form>
+    {% if message_succes %}
+        <div class="alert alert-success mt-2 mb-0 py-2 small">{{ message_succes }}</div>
+    {% endif %}
+    {% if message_erreur %}
+        <div class="alert alert-danger mt-2 mb-0 py-2 small">{{ message_erreur }}</div>
+    {% endif %}
+</div>
+
+<!-- ── Indicateurs clés ── -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="carte-metrique">
+            <div class="icone">👥</div>
+            <div class="valeur">{{ stats.nb_utilisateurs }}</div>
+            <div class="label">Utilisateurs analysés</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="carte-metrique vert">
+            <div class="icone">💚</div>
+            <div class="valeur">{{ stats.taux_fidelite }}%</div>
+            <div class="label">Taux de fidélité global</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="carte-metrique">
+            <div class="icone">🧩</div>
+            <div class="valeur">{{ stats.nb_segments }}</div>
+            <div class="label">Segments identifiés</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="carte-metrique rouge">
+            <div class="icone">⚠️</div>
+            <div class="valeur">{{ stats.nb_churners }}</div>
+            <div class="label">Churners identifiés</div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Navigation par modules ── -->
+<h4 class="mb-3" style="color: var(--noir-orange); font-weight:700;">
+    <i class="bi bi-grid-3x3-gap"></i> Navigation
+</h4>
+
+<div class="row g-3">
+    {% for module in modules %}
+    <div class="col-6 col-md-4">
+        <a href="{{ module.url }}" class="carte-module">
+            <div class="icone-module">{{ module.icone }}</div>
+            <div class="titre-module">{{ module.titre }}</div>
+            <div class="desc-module">{{ module.description }}</div>
+        </a>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}

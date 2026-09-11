@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}Segmentation K-Means — Orange Money{% endblock %}
+
+{% block content %}
+
+<div class="banniere-page">
+    <h1><i class="bi bi-diagram-3-fill"></i> Segmentation K-Means</h1>
+    <p>5 profils comportementaux identifiés parmi les utilisateurs</p>
+</div>
+
+<!-- ── Cartes de synthèse ── -->
+<div class="row g-3 mb-4">
+    {% for c in cartes_segments %}
+    <div class="col-6 col-md-2-4" style="flex: 0 0 auto; width: 20%;">
+        <div class="carte-metrique" style="border-top-color: {{ c.couleur }};">
+            <div class="titre-module small fw-bold" style="min-height:40px;">{{ c.nom }}</div>
+            <div class="valeur" style="color: {{ c.couleur }}; font-size:1.5rem;">{{ c.taille }}</div>
+            <div class="label">({{ c.pct }}%)</div>
+            <div class="fw-bold mt-1">{{ c.taux_fidelite }}%</div>
+            <div class="label">fidélité</div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- ── Radar interactif ── -->
+<div class="row g-3 mb-4">
+    <div class="col-12">
+        <div class="carte-metrique text-start">
+            <h5 class="mb-2">🕸️ Profils comparés (cliquez sur la légende pour afficher/masquer)</h5>
+            <div class="chart-container-large" style="height: 380px; max-width: 500px;">
+                <canvas id="chartRadar"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Tableau détaillé ── -->
+<div class="row g-3 mb-4">
+    <div class="col-12">
+        <div class="carte-metrique text-start">
+            <h5 class="mb-3">📊 Tableau détaillé des profils</h5>
+            <p class="small text-muted">
+                Satisfaction (1-5) · Fréquence et Ancienneté et Perception des frais (1-4) · Fidélité en %
+            </p>
+            <div class="table-responsive">
+                <table class="table table-om table-striped">
+                    <thead>
+                        <tr>
+                            <th>Segment</th><th>Satisfaction</th><th>Fréquence</th>
+                            <th>Ancienneté</th><th>Frais</th><th>Fidélité</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ligne in tableau_profils %}
+                        <tr>
+                            <td><strong>{{ ligne.segment }}</strong></td>
+                            <td>{{ ligne.satisfaction }}</td>
+                            <td>{{ ligne.frequence }}</td>
+                            <td>{{ ligne.anciennete }}</td>
+                            <td>{{ ligne.frais }}</td>
+                            <td>{{ ligne.fidelite_pct }}%</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Explorateur de segment ── -->
+<div class="row g-3">
+    <div class="col-12">
+        <div class="carte-metrique text-start">
+            <h5 class="mb-3">🔎 Explorer un segment en détail</h5>
+            <select class="form-select mb-3" id="selecteurSegment" style="max-width: 350px;">
+                {% for s in liste_segments %}
+                <option value="{{ s }}">{{ s }}</option>
+                {% endfor %}
+            </select>
+
+            <div class="row g-3 mb-3">
+                <div class="col-6 col-md-3">
+                    <div class="carte-metrique">
+                        <div class="icone">👥</div>
+                        <div class="valeur" id="expUtilisateurs">--</div>
+                        <div class="label">Utilisateurs</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="carte-metrique vert">
+                        <div class="icone">💚</div>
+                        <div class="valeur" id="expFidelite">--%</div>
+                        <div class="label">Taux de fidélité</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="carte-metrique">
+                        <div class="icone">⭐</div>
+                        <div class="valeur" id="expSatisfaction">--</div>
+                        <div class="label">Satisfaction moyenne</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="carte-metrique">
+                        <div class="icone">🔁</div>
+                        <div class="valeur" id="expFrequence">--</div>
+                        <div class="label">Fréquence moyenne</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <canvas id="chartExplorateur"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<style>
+/* 5 cartes égales sur desktop (Bootstrap n'a pas de col-md-2-4 nativement) */
+@media (min-width: 768px) {
+    .col-md-2-4 { flex: 0 0 auto; width: 20% !important; }
+}
+</style>
+<script>
+const radarLabels = {{ radar_labels | tojson }};
+const radarDatasets = {{ radar_datasets | tojson }};
+
+new Chart(document.getElementById('chartRadar'), {
+    type: 'radar',
+    data: {
+        labels: radarLabels,
+        datasets: radarDatasets.map(d => ({
+            label: d.label,
+            data: d.data,
+            borderColor: d.couleur,
+            backgroundColor: d.couleur + '22',
+            pointBackgroundColor: d.couleur,
+        }))
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: { r: { min: 0, max: 1, ticks: { display: false } } },
+        plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } } }
+    }
+});
+
+let chartExplorateurInstance = null;
+
+async function chargerSegment(nomSegment) {
+    const reponse = await fetch('/api/segment/' + encodeURIComponent(nomSegment));
+    const d = await reponse.json();
+
+    document.getElementById('expUtilisateurs').innerText = d.nb_utilisateurs;
+    document.getElementById('expFidelite').innerText = d.taux_fidelite + '%';
+    document.getElementById('expSatisfaction').innerText = d.satisfaction_moyenne + '/5';
+    document.getElementById('expFrequence').innerText = d.frequence_moyenne + '/4';
+
+    if (chartExplorateurInstance) chartExplorateurInstance.destroy();
+    chartExplorateurInstance = new Chart(document.getElementById('chartExplorateur'), {
+        type: 'bar',
+        data: {
+            labels: d.sat_labels,
+            datasets: [
+                { label: 'Fidèle', data: d.sat_fideles, backgroundColor: '#2E7D32' },
+                { label: 'Churner', data: d.sat_churners, backgroundColor: '#C62828' }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom' }, title: { display: true, text: 'Distribution de la satisfaction' } }
+        }
+    });
+}
+
+document.getElementById('selecteurSegment').addEventListener('change', (e) => chargerSegment(e.target.value));
+// Charger le premier segment par défaut au chargement de la page
+chargerSegment(document.getElementById('selecteurSegment').value);
+</script>
+{% endblock %}
