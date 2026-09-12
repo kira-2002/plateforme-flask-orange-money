@@ -5,6 +5,7 @@
 :root {
     --orange: #FF7900;
     --orange-fonce: #D96500;
+    --orange-clair: #FFA94D;
     --noir-orange: #221C1F;
     --gris-clair: #F5F5F5;
     --vert-ok: #2E7D32;
@@ -130,7 +131,7 @@ main.container-fluid {
     transform: translateY(-2px);
     color: inherit;
 }
-.carte-module .icone-module { font-size: 1.9rem; }
+.carte-module .icone-module { font-size: 1.9rem; color: var(--orange-clair); }
 .carte-module .titre-module {
     font-weight: 700;
     margin-top: 8px;
