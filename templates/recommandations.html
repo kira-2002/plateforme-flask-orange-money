@@ -12,10 +12,10 @@
 <div class="carte-metrique text-start">
     <ul class="nav nav-tabs mb-3">
         <li class="nav-item">
-            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-guide" type="button">📖 Guide par segment</button>
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-guide" type="button"><i class="bi bi-book-fill"></i> Guide par segment</button>
         </li>
         <li class="nav-item">
-            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-express" type="button">🎯 Recommandation express</button>
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-express" type="button"><i class="bi bi-bullseye"></i> Recommandation express</button>
         </li>
     </ul>
 
@@ -28,7 +28,7 @@
                     <h2 class="accordion-header">
                         <button class="accordion-button {% if not loop.first %}collapsed{% endif %}" type="button"
                                 data-bs-toggle="collapse" data-bs-target="#collapse{{ loop.index }}">
-                            {{ s.icone }}&nbsp;<strong>{{ s.nom }}</strong>&nbsp;—&nbsp;{{ s.taille }} utilisateurs ({{ s.taux_fidelite }}% fidèles)
+                            <i class="bi {{ s.icone }}"></i>&nbsp;<strong>{{ s.nom }}</strong>&nbsp;—&nbsp;{{ s.taille }} utilisateurs ({{ s.taux_fidelite }}% fidèles)
                         </button>
                     </h2>
                     <div id="collapse{{ loop.index }}" class="accordion-collapse collapse {% if loop.first %}show{% endif %}"
@@ -36,11 +36,11 @@
                         <div class="accordion-body">
                             <div class="row">
                                 <div class="col-md-5">
-                                    <p><strong>📋 Diagnostic</strong><br>{{ s.diagnostic }}</p>
-                                    <p><strong>🎯 Objectif</strong><br>{{ s.objectif }}</p>
+                                    <p><strong><i class="bi bi-clipboard-data-fill"></i> Diagnostic</strong><br>{{ s.diagnostic }}</p>
+                                    <p><strong><i class="bi bi-bullseye"></i> Objectif</strong><br>{{ s.objectif }}</p>
                                 </div>
                                 <div class="col-md-7">
-                                    <strong>✅ Actions recommandées</strong>
+                                    <strong><i class="bi bi-check-circle-fill"></i> Actions recommandées</strong>
                                     <ul>
                                         {% for a in s.actions %}
                                         <li>{{ a }}</li>
@@ -95,9 +95,9 @@
 const recommandations = {{ recommandations_json | tojson }};
 
 const messagesRisque = {
-    eleve: { classe: 'alert-danger', texte: '🔴 Priorité haute — action à engager sous 48h. Recommandé : contact direct par le service client.' },
-    modere: { classe: 'alert-warning', texte: '🟠 Priorité moyenne — à intégrer dans la prochaine campagne ciblée.' },
-    faible: { classe: 'alert-success', texte: '🟢 Priorité normale — suivi standard suffisant.' }
+    eleve: { classe: 'alert-danger', texte: '<i class="bi bi-circle-fill text-danger"></i> Priorité haute — action à engager sous 48h. Recommandé : contact direct par le service client.' },
+    modere: { classe: 'alert-warning', texte: '<i class="bi bi-circle-fill text-warning"></i> Priorité moyenne — à intégrer dans la prochaine campagne ciblée.' },
+    faible: { classe: 'alert-success', texte: '<i class="bi bi-circle-fill text-success"></i> Priorité normale — suivi standard suffisant.' }
 };
 
 function genererRecommandation() {
@@ -110,12 +110,12 @@ function genererRecommandation() {
 
     document.getElementById('resultatExpress').innerHTML = `
         <div class="encadre-info mb-2">
-            <h5>${c.icone} ${segment}</h5>
+            <h5><i class="bi ${c.icone}"></i> ${segment}</h5>
             <p><strong>Diagnostic :</strong> ${c.diagnostic}</p>
             <p><strong>Objectif :</strong> ${c.objectif}</p>
         </div>
         <div class="alert ${m.classe}">${m.texte}</div>
-        <h6>✅ Actions recommandées</h6>
+        <h6><i class="bi bi-check-circle-fill"></i> Actions recommandées</h6>
         <ul>${actionsHtml}</ul>
     `;
 }

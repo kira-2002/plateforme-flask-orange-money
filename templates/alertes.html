@@ -17,22 +17,22 @@
 <!-- ── Compteurs ── -->
 <div class="row g-3 mb-3">
     <div class="col-6 col-md-3">
-        <div class="carte-metrique"><div class="icone">👥</div><div class="valeur">{{ nb_total }}</div><div class="label">Clients surveillés</div></div>
+        <div class="carte-metrique"><div class="icone"><i class="bi bi-people-fill"></i></div><div class="valeur">{{ nb_total }}</div><div class="label">Clients surveillés</div></div>
     </div>
     <div class="col-6 col-md-3">
-        <div class="carte-metrique rouge"><div class="icone">🔴</div><div class="valeur">{{ nb_eleve }}</div><div class="label">Alerte élevée (&gt;70%)</div></div>
+        <div class="carte-metrique rouge"><div class="icone"><i class="bi bi-circle-fill text-danger"></i></div><div class="valeur">{{ nb_eleve }}</div><div class="label">Alerte élevée (&gt;70%)</div></div>
     </div>
     <div class="col-6 col-md-3">
-        <div class="carte-metrique"><div class="icone">🟠</div><div class="valeur">{{ nb_modere }}</div><div class="label">Alerte modérée (40-70%)</div></div>
+        <div class="carte-metrique"><div class="icone"><i class="bi bi-circle-fill text-warning"></i></div><div class="valeur">{{ nb_modere }}</div><div class="label">Alerte modérée (40-70%)</div></div>
     </div>
     <div class="col-6 col-md-3">
-        <div class="carte-metrique vert"><div class="icone">🟢</div><div class="valeur">{{ nb_faible }}</div><div class="label">Risque faible (&lt;40%)</div></div>
+        <div class="carte-metrique vert"><div class="icone"><i class="bi bi-circle-fill text-success"></i></div><div class="valeur">{{ nb_faible }}</div><div class="label">Risque faible (&lt;40%)</div></div>
     </div>
 </div>
 
 {% if nb_captifs_risque > 0 %}
 <div class="alert alert-warning">
-    ⚡ <strong>{{ nb_captifs_risque }} utilisateur(s)</strong> du segment "Captifs Insatisfaits" sont en alerte rouge — ce profil combine usage fréquent et forte probabilité de départ, à traiter en priorité absolue.
+    <i class="bi bi-lightning-charge-fill"></i> <strong>{{ nb_captifs_risque }} utilisateur(s)</strong> du segment "Captifs Insatisfaits" sont en alerte rouge — ce profil combine usage fréquent et forte probabilité de départ, à traiter en priorité absolue.
 </div>
 {% endif %}
 
@@ -52,9 +52,9 @@
             <label class="form-label small mb-1">Filtrer par niveau d'alerte</label>
             <select class="form-select form-select-sm" id="filtreNiveau">
                 <option value="">Tous les niveaux</option>
-                <option value="🔴 Élevé">🔴 Élevé</option>
-                <option value="🟠 Modéré">🟠 Modéré</option>
-                <option value="🟢 Faible">🟢 Faible</option>
+                <option value="Élevé">Élevé</option>
+                <option value="Modéré">Modéré</option>
+                <option value="Faible">Faible</option>
             </select>
         </div>
         <div class="col-md-4">
@@ -86,7 +86,7 @@
                         </div>
                     </td>
                     <td>
-                        {% if l.niveau == 'eleve' %}🔴 Élevé{% elif l.niveau == 'modere' %}🟠 Modéré{% else %}🟢 Faible{% endif %}
+                        {% if l.niveau == 'eleve' %}<i class="bi bi-circle-fill text-danger"></i> Élevé{% elif l.niveau == 'modere' %}<i class="bi bi-circle-fill text-warning"></i> Modéré{% else %}<i class="bi bi-circle-fill text-success"></i> Faible{% endif %}
                     </td>
                     <td>{{ l.segment }}</td>
                     <td>{{ l.satisfaction }}</td>

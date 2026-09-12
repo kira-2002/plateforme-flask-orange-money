@@ -13,17 +13,17 @@
     <ul class="nav nav-tabs mb-3" role="tablist">
         <li class="nav-item">
             <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-shap" type="button">
-                🎯 Importance SHAP
+                <i class="bi bi-bullseye"></i> Importance SHAP
             </button>
         </li>
         <li class="nav-item">
             <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-rf" type="button">
-                🌳 Importance Random Forest
+                <i class="bi bi-tree-fill"></i> Importance Random Forest
             </button>
         </li>
         <li class="nav-item">
             <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-corr" type="button">
-                📈 Corrélations
+                <i class="bi bi-graph-up"></i> Corrélations
             </button>
         </li>
     </ul>
@@ -89,7 +89,7 @@ const rfLabels = {{ rf_labels | tojson }};
 const rfValeurs = {{ rf_valeurs | tojson }};
 const rfCouleurs = {{ rf_couleurs | tojson }};
 
-new Chart(document.getElementById('chartShapGlobal'), {
+const chartShap = new Chart(document.getElementById('chartShapGlobal'), {
     type: 'bar',
     data: {
         labels: shapLabels,
@@ -105,7 +105,7 @@ new Chart(document.getElementById('chartShapGlobal'), {
     }
 });
 
-new Chart(document.getElementById('chartRfImportance'), {
+const chartRf = new Chart(document.getElementById('chartRfImportance'), {
     type: 'bar',
     data: {
         labels: rfLabels,
@@ -119,6 +119,16 @@ new Chart(document.getElementById('chartRfImportance'), {
             y: { ticks: { font: { size: 10 } } }
         }
     }
+});
+
+// ── Correctif indispensable : Chart.js dessiné dans un onglet Bootstrap
+// caché (display:none) obtient une taille de 0x0. On force un
+// recalcul de la taille exactement au moment où l'onglet s'affiche. ──
+document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(function (boutonOnglet) {
+    boutonOnglet.addEventListener('shown.bs.tab', function () {
+        chartShap.resize();
+        chartRf.resize();
+    });
 });
 </script>
 {% endblock %}

@@ -12,9 +12,9 @@
 <!-- ── Cartes de synthèse ── -->
 <div class="row g-3 mb-4">
     {% for c in cartes_segments %}
-    <div class="col-6 col-md-2-4" style="flex: 0 0 auto; width: 20%;">
+    <div class="col-12 col-sm-6 col-md-2-4">
         <div class="carte-metrique" style="border-top-color: {{ c.couleur }};">
-            <div class="titre-module small fw-bold" style="min-height:40px;">{{ c.nom }}</div>
+            <div class="titre-module small fw-bold" style="min-height:auto;">{{ c.nom }}</div>
             <div class="valeur" style="color: {{ c.couleur }}; font-size:1.5rem;">{{ c.taille }}</div>
             <div class="label">({{ c.pct }}%)</div>
             <div class="fw-bold mt-1">{{ c.taux_fidelite }}%</div>
@@ -28,7 +28,7 @@
 <div class="row g-3 mb-4">
     <div class="col-12">
         <div class="carte-metrique text-start">
-            <h5 class="mb-2">🕸️ Profils comparés (cliquez sur la légende pour afficher/masquer)</h5>
+            <h5 class="mb-2"><i class="bi bi-diagram-3-fill" style="color:#FF7900;"></i> Profils comparés (cliquez sur la légende pour afficher/masquer)</h5>
             <div class="chart-container-large" style="height: 380px; max-width: 500px;">
                 <canvas id="chartRadar"></canvas>
             </div>
@@ -40,7 +40,7 @@
 <div class="row g-3 mb-4">
     <div class="col-12">
         <div class="carte-metrique text-start">
-            <h5 class="mb-3">📊 Tableau détaillé des profils</h5>
+            <h5 class="mb-3"><i class="bi bi-table" style="color:#FF7900;"></i> Tableau détaillé des profils</h5>
             <p class="small text-muted">
                 Satisfaction (1-5) · Fréquence et Ancienneté et Perception des frais (1-4) · Fidélité en %
             </p>
@@ -74,7 +74,7 @@
 <div class="row g-3">
     <div class="col-12">
         <div class="carte-metrique text-start">
-            <h5 class="mb-3">🔎 Explorer un segment en détail</h5>
+            <h5 class="mb-3"><i class="bi bi-search" style="color:#FF7900;"></i> Explorer un segment en détail</h5>
             <select class="form-select mb-3" id="selecteurSegment" style="max-width: 350px;">
                 {% for s in liste_segments %}
                 <option value="{{ s }}">{{ s }}</option>
@@ -84,28 +84,28 @@
             <div class="row g-3 mb-3">
                 <div class="col-6 col-md-3">
                     <div class="carte-metrique">
-                        <div class="icone">👥</div>
+                        <div class="icone"><i class="bi bi-people-fill"></i></div>
                         <div class="valeur" id="expUtilisateurs">--</div>
                         <div class="label">Utilisateurs</div>
                     </div>
                 </div>
                 <div class="col-6 col-md-3">
                     <div class="carte-metrique vert">
-                        <div class="icone">💚</div>
+                        <div class="icone"><i class="bi bi-heart-fill" style="color:#2E7D32;"></i></div>
                         <div class="valeur" id="expFidelite">--%</div>
                         <div class="label">Taux de fidélité</div>
                     </div>
                 </div>
                 <div class="col-6 col-md-3">
                     <div class="carte-metrique">
-                        <div class="icone">⭐</div>
+                        <div class="icone"><i class="bi bi-star-fill" style="color:#FF7900;"></i></div>
                         <div class="valeur" id="expSatisfaction">--</div>
                         <div class="label">Satisfaction moyenne</div>
                     </div>
                 </div>
                 <div class="col-6 col-md-3">
                     <div class="carte-metrique">
-                        <div class="icone">🔁</div>
+                        <div class="icone"><i class="bi bi-arrow-repeat"></i></div>
                         <div class="valeur" id="expFrequence">--</div>
                         <div class="label">Fréquence moyenne</div>
                     </div>

@@ -36,28 +36,28 @@
 <div class="row g-3 mb-4">
     <div class="col-6 col-md-3">
         <div class="carte-metrique">
-            <div class="icone">👥</div>
+            <div class="icone"><i class="bi bi-people-fill"></i></div>
             <div class="valeur">{{ stats.nb_utilisateurs }}</div>
             <div class="label">Utilisateurs analysés</div>
         </div>
     </div>
     <div class="col-6 col-md-3">
         <div class="carte-metrique vert">
-            <div class="icone">💚</div>
+            <div class="icone"><i class="bi bi-heart-fill" style="color:#2E7D32;"></i></div>
             <div class="valeur">{{ stats.taux_fidelite }}%</div>
             <div class="label">Taux de fidélité global</div>
         </div>
     </div>
     <div class="col-6 col-md-3">
         <div class="carte-metrique">
-            <div class="icone">🧩</div>
+            <div class="icone"><i class="bi bi-diagram-3-fill"></i></div>
             <div class="valeur">{{ stats.nb_segments }}</div>
             <div class="label">Segments identifiés</div>
         </div>
     </div>
     <div class="col-6 col-md-3">
         <div class="carte-metrique rouge">
-            <div class="icone">⚠️</div>
+            <div class="icone"><i class="bi bi-exclamation-triangle-fill" style="color:#C62828;"></i></div>
             <div class="valeur">{{ stats.nb_churners }}</div>
             <div class="label">Churners identifiés</div>
         </div>
@@ -73,7 +73,7 @@
     {% for module in modules %}
     <div class="col-6 col-md-4">
         <a href="{{ module.url }}" class="carte-module">
-            <div class="icone-module">{{ module.icone }}</div>
+            <div class="icone-module"><i class="bi {{ module.icone }}"></i></div>
             <div class="titre-module">{{ module.titre }}</div>
             <div class="desc-module">{{ module.description }}</div>
         </a>

@@ -79,12 +79,12 @@ def stats_accueil():
 
 
 MODULES = [
-    {'icone': '📈', 'titre': 'Tableau de bord', 'description': "Indicateurs clés en un coup d'œil", 'url': '/dashboard'},
-    {'icone': '🔮', 'titre': 'Prédiction individuelle', 'description': 'Tester un profil utilisateur', 'url': '/prediction'},
-    {'icone': '🧩', 'titre': 'Segmentation K-Means', 'description': '5 profils comportementaux', 'url': '/segmentation'},
-    {'icone': '🔍', 'titre': 'Analyse des facteurs', 'description': 'Ce qui influence la fidélité', 'url': '/facteurs'},
-    {'icone': '💡', 'titre': 'Recommandations', 'description': 'Actions marketing par segment', 'url': '/recommandations'},
-    {'icone': '🚨', 'titre': 'Alertes clients à risque', 'description': 'Surveillance proactive', 'url': '/alertes'},
+    {'icone': 'bi-bar-chart-fill', 'titre': 'Tableau de bord', 'description': "Indicateurs clés en un coup d'œil", 'url': '/dashboard'},
+    {'icone': 'bi-magic', 'titre': 'Prédiction individuelle', 'description': 'Tester un profil utilisateur', 'url': '/prediction'},
+    {'icone': 'bi-diagram-3-fill', 'titre': 'Segmentation K-Means', 'description': '5 profils comportementaux', 'url': '/segmentation'},
+    {'icone': 'bi-search', 'titre': 'Analyse des facteurs', 'description': 'Ce qui influence la fidélité', 'url': '/facteurs'},
+    {'icone': 'bi-lightbulb-fill', 'titre': 'Recommandations', 'description': 'Actions marketing par segment', 'url': '/recommandations'},
+    {'icone': 'bi-exclamation-triangle-fill', 'titre': 'Alertes clients à risque', 'description': 'Surveillance proactive', 'url': '/alertes'},
 ]
 
 
@@ -471,7 +471,7 @@ def facteurs():
 
 RECOMMANDATIONS = {
     'Fidèles Engagés': {
-        'icone': '⭐',
+        'icone': 'bi-star-fill',
         'diagnostic': "Satisfaction, usage et fidélité élevés — le segment le plus précieux.",
         'objectif': "Capitaliser sur leur engagement et en faire des ambassadeurs.",
         'actions': [
@@ -482,7 +482,7 @@ RECOMMANDATIONS = {
         ],
     },
     'Fidèles Passifs': {
-        'icone': '💤',
+        'icone': 'bi-moon-fill',
         'diagnostic': "Fidèles mais peu actifs — une fidélité \"dormante\" plutôt qu'engagée.",
         'objectif': "Réactiver l'usage sans forcer, pour transformer la fidélité passive en usage actif.",
         'actions': [
@@ -493,7 +493,7 @@ RECOMMANDATIONS = {
         ],
     },
     'Captifs Insatisfaits': {
-        'icone': '⚡',
+        'icone': 'bi-lightning-charge-fill',
         'diagnostic': "Usage fréquent MAIS satisfaction très faible — un profil à risque de départ malgré une fidélité apparente.",
         'objectif': "Traiter en priorité l'insatisfaction avant qu'elle ne se traduise en churn.",
         'actions': [
@@ -504,7 +504,7 @@ RECOMMANDATIONS = {
         ],
     },
     'Nouveaux Utilisateurs': {
-        'icone': '🌱',
+        'icone': 'bi-flower1',
         'diagnostic': "Ancienneté très faible — une relation encore en construction.",
         'objectif': "Ancrer durablement l'habitude d'usage dès les premiers mois.",
         'actions': [
@@ -515,7 +515,7 @@ RECOMMANDATIONS = {
         ],
     },
     'Utilisateurs à Risque': {
-        'icone': '🚨',
+        'icone': 'bi-exclamation-triangle-fill',
         'diagnostic': "Satisfaction faible, usage rare, perception négative des frais — le taux de fidélité le plus bas de tous les segments.",
         'objectif': "Rétention prioritaire avant un désengagement définitif.",
         'actions': [

@@ -9,32 +9,55 @@
     <p>Vue d'ensemble des indicateurs de fidélité</p>
 </div>
 
+<!-- ── Chargement d'un dataset personnalisé ── -->
+<div class="carte-metrique text-start mb-4">
+    <form method="POST" enctype="multipart/form-data" class="row g-2 align-items-end">
+        <div class="col-md-8">
+            <label class="form-label small mb-1">
+                <i class="bi bi-upload"></i> Charger un autre dataset (même format que le fichier par défaut)
+            </label>
+            <input type="file" name="fichier_dataset" accept=".csv" class="form-control form-control-sm">
+        </div>
+        <div class="col-md-4">
+            <button type="submit" class="btn btn-om w-100">
+                <i class="bi bi-arrow-repeat"></i> Charger le tableau de bord
+            </button>
+        </div>
+    </form>
+    {% if message_succes %}
+        <div class="alert alert-success mt-2 mb-0 py-2 small">{{ message_succes }}</div>
+    {% endif %}
+    {% if message_erreur %}
+        <div class="alert alert-danger mt-2 mb-0 py-2 small">{{ message_erreur }}</div>
+    {% endif %}
+</div>
+
 <!-- ── Indicateurs clés ── -->
 <div class="row g-3 mb-4">
     <div class="col-6 col-md-3">
         <div class="carte-metrique">
-            <div class="icone">👥</div>
+            <div class="icone"><i class="bi bi-people-fill"></i></div>
             <div class="valeur">{{ stats.nb_utilisateurs }}</div>
             <div class="label">Utilisateurs analysés</div>
         </div>
     </div>
     <div class="col-6 col-md-3">
         <div class="carte-metrique vert">
-            <div class="icone">💚</div>
+            <div class="icone"><i class="bi bi-heart-fill" style="color:#2E7D32;"></i></div>
             <div class="valeur">{{ stats.taux_fidelite }}%</div>
             <div class="label">Taux de fidélité</div>
         </div>
     </div>
     <div class="col-6 col-md-3">
         <div class="carte-metrique">
-            <div class="icone">⭐</div>
+            <div class="icone"><i class="bi bi-star-fill" style="color:#FF7900;"></i></div>
             <div class="valeur">{{ satisfaction_moyenne }}/5</div>
             <div class="label">Satisfaction moyenne</div>
         </div>
     </div>
     <div class="col-6 col-md-3">
         <div class="carte-metrique rouge">
-            <div class="icone">⚠️</div>
+            <div class="icone"><i class="bi bi-exclamation-triangle-fill" style="color:#C62828;"></i></div>
             <div class="valeur">{{ stats.nb_churners }}</div>
             <div class="label">Churners</div>
         </div>
@@ -45,7 +68,7 @@
 <div class="row g-3 mb-4">
     <div class="col-md-6">
         <div class="carte-metrique text-start">
-            <h5 class="mb-3">🟢 Répartition Fidèles / Churners</h5>
+            <h5 class="mb-3"><i class="bi bi-pie-chart-fill" style="color:#2E7D32;"></i> Répartition Fidèles / Churners</h5>
             <div class="chart-container">
                 <canvas id="chartFidelite"></canvas>
             </div>
@@ -53,7 +76,7 @@
     </div>
     <div class="col-md-6">
         <div class="carte-metrique text-start">
-            <h5 class="mb-3">🧩 Répartition par segment</h5>
+            <h5 class="mb-3"><i class="bi bi-diagram-3-fill" style="color:#FF7900;"></i> Répartition par segment</h5>
             <div class="chart-container">
                 <canvas id="chartSegments"></canvas>
             </div>
@@ -65,7 +88,7 @@
 <div class="row g-3 mb-4">
     <div class="col-12">
         <div class="carte-metrique text-start">
-            <h5 class="mb-3">📊 Taux de fidélité par segment</h5>
+            <h5 class="mb-3"><i class="bi bi-bar-chart-fill" style="color:#FF7900;"></i> Taux de fidélité par segment</h5>
             <div class="chart-container-large">
                 <canvas id="chartTauxSegments"></canvas>
             </div>
@@ -77,7 +100,7 @@
 <div class="row g-3">
     <div class="col-md-6">
         <div class="carte-metrique text-start">
-            <h5 class="mb-3">😊 Distribution de la satisfaction</h5>
+            <h5 class="mb-3"><i class="bi bi-emoji-smile-fill" style="color:#FF7900;"></i> Distribution de la satisfaction</h5>
             <div class="chart-container">
                 <canvas id="chartSatisfaction"></canvas>
             </div>
@@ -85,7 +108,7 @@
     </div>
     <div class="col-md-6">
         <div class="carte-metrique text-start">
-            <h5 class="mb-3">💰 Perception des frais</h5>
+            <h5 class="mb-3"><i class="bi bi-cash-coin" style="color:#FF7900;"></i> Perception des frais</h5>
             <div class="chart-container">
                 <canvas id="chartFrais"></canvas>
             </div>
