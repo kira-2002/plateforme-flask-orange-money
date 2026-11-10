@@ -1,0 +1,17 @@
+﻿# Environnements virtuels
+.venv/
+.venv310/
+venv/
+
+# Fichiers temporaires Python
+__pycache__/
+*.py[cod]
+
+# Sauvegardes
+backups/
+
+# Fichiers importés par les utilisateurs
+data/uploads/
+
+# Fichiers système
+.DS_Store

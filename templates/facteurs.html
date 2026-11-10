@@ -18,7 +18,7 @@
         </li>
         <li class="nav-item">
             <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-rf" type="button">
-                <i class="bi bi-tree-fill"></i> Importance Random Forest
+                <i class="bi bi-tree-fill"></i> Importance par permutation
             </button>
         </li>
         <li class="nav-item">
@@ -32,7 +32,7 @@
         <!-- ── Onglet SHAP ── -->
         <div class="tab-pane fade show active" id="tab-shap">
             <p class="text-muted small">
-                Mesure, pour chaque variable, son impact moyen sur les prédictions du modèle Random Forest.
+                Mesure, pour chaque variable, son impact moyen sur les prédictions de la régression logistique.
             </p>
             <div class="chart-container-xl">
                 <canvas id="chartShapGlobal"></canvas>
@@ -42,11 +42,12 @@
         <!-- ── Onglet Random Forest ── -->
         <div class="tab-pane fade" id="tab-rf">
             <p class="text-muted small">
-                Contribution de chaque variable à la réduction de l'impureté de Gini dans les arbres du Random Forest.
-                <span class="text-success">Vert</span> = au-dessus de la médiane, <span class="text-danger">rouge</span> = en-dessous.
+                Importance par permutation calculée avec la régression logistique sur le F1-score de la classe 0,
+                puis moyennée sur les 50 plis externes. <span class="text-success">Vert</span> = importance positive,
+                <span class="text-danger">rouge</span> = importance négative.
             </p>
             <div class="chart-container-xl">
-                <canvas id="chartRfImportance"></canvas>
+                <canvas id="chartPermutationImportance"></canvas>
             </div>
         </div>
 
@@ -85,9 +86,9 @@
 <script>
 const shapLabels = {{ shap_labels | tojson }};
 const shapValeurs = {{ shap_valeurs | tojson }};
-const rfLabels = {{ rf_labels | tojson }};
-const rfValeurs = {{ rf_valeurs | tojson }};
-const rfCouleurs = {{ rf_couleurs | tojson }};
+const permutationLabels = {{ permutation_labels | tojson }};
+const permutationValeurs = {{ permutation_valeurs | tojson }};
+const permutationCouleurs = {{ permutation_couleurs | tojson }};
 
 const chartShap = new Chart(document.getElementById('chartShapGlobal'), {
     type: 'bar',
@@ -105,17 +106,17 @@ const chartShap = new Chart(document.getElementById('chartShapGlobal'), {
     }
 });
 
-const chartRf = new Chart(document.getElementById('chartRfImportance'), {
+const chartPermutation = new Chart(document.getElementById('chartPermutationImportance'), {
     type: 'bar',
     data: {
-        labels: rfLabels,
-        datasets: [{ data: rfValeurs, backgroundColor: rfCouleurs }]
+        labels: permutationLabels,
+        datasets: [{ data: permutationValeurs, backgroundColor: permutationCouleurs }]
     },
     options: {
         indexAxis: 'y', responsive: true, maintainAspectRatio: false,
         plugins: { legend: { display: false } },
         scales: {
-            x: { title: { display: true, text: 'Importance (Gini)' } },
+            x: { title: { display: true, text: 'Variation du F1-score de la classe 0' } },
             y: { ticks: { font: { size: 10 } } }
         }
     }
@@ -127,7 +128,7 @@ const chartRf = new Chart(document.getElementById('chartRfImportance'), {
 document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(function (boutonOnglet) {
     boutonOnglet.addEventListener('shown.bs.tab', function () {
         chartShap.resize();
-        chartRf.resize();
+        chartPermutation.resize();
     });
 });
 </script>

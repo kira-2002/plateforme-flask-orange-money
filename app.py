@@ -1,7 +1,7 @@
 """
 Plateforme décisionnelle Orange Money — Version Flask
 Étape 2+ : chargement des vrais modèles ML, scaler, K-Means, dataset
-+ système de dataset actif par session (persiste sur toutes les pages)
++ pipelines à prétraitement intégré, dataset 628 et segmentation actualisée
 """
 
 import os
@@ -21,7 +21,46 @@ DONNEES = charger_tout()
 DOSSIER_UPLOADS = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'uploads')
 os.makedirs(DOSSIER_UPLOADS, exist_ok=True)
 
-COLONNES_REQUISES_DATASET = ['fidelite', 'cluster', 'sat_globale', 'perception_frais']
+COLONNES_REQUISES_DATASET = [
+    'tranche_age', 'sexe', 'situation_professionnelle',
+    'anciennete_usage', 'frequence_usage', 'sat_globale',
+    'perception_frais', 'presence_probleme', 'operateur_prefere',
+    'motif_principal', 'pb_aucun', 'pb_autre', 'pb_lenteur',
+    'pb_probleme_de_reseau', 'pb_service_client',
+    'pb_transaction_echouee', 'serv_achat_de_credit',
+    'serv_paiement_de_factures', 'serv_paiement_marchand',
+    'serv_reception_dargent', 'serv_transfert_dargent',
+    'fidelite', 'cluster',
+]
+
+
+def valider_dataset_uploade(df):
+    """Vérifie le schéma du CSV préparé utilisé par la plateforme."""
+    if df.empty:
+        return "Le fichier CSV est vide."
+
+    manquantes = [c for c in COLONNES_REQUISES_DATASET if c not in df.columns]
+    if manquantes:
+        return (
+            "Colonnes manquantes dans le fichier : "
+            f"{', '.join(manquantes)}. Le fichier doit contenir les 23 colonnes "
+            "du dataset préparé. Le dataset actif précédent est conservé."
+        )
+
+    if df[COLONNES_REQUISES_DATASET].isna().any().any():
+        return (
+            "Le fichier contient des valeurs manquantes dans les 23 colonnes "
+            "requises. Nettoyez le CSV avant de l'importer. "
+            "Le dataset actif précédent est conservé."
+        )
+
+    if not df['fidelite'].isin([0, 1]).all():
+        return "La colonne 'fidelite' doit contenir uniquement 0 et 1."
+
+    if not df['cluster'].isin([0, 1, 2, 3, 4]).all():
+        return "La colonne 'cluster' doit contenir les identifiants 0 à 4."
+
+    return None
 
 
 def obtenir_dataset_actif():
@@ -95,32 +134,36 @@ MODULES = [
 @app.route('/', methods=['GET', 'POST'])
 def accueil():
     message_erreur = None
-    message_succes = None
 
     if request.method == 'POST':
         fichier = request.files.get('fichier_dataset')
-        if fichier and fichier.filename:
+        if not fichier or not fichier.filename:
+            message_erreur = "Sélectionnez un fichier CSV avant de cliquer sur Charger et explorer."
+        else:
             try:
                 df_uploade = pd.read_csv(fichier)
-                manquantes = [c for c in COLONNES_REQUISES_DATASET if c not in df_uploade.columns]
-                if manquantes:
-                    message_erreur = f"Colonnes manquantes dans le fichier : {', '.join(manquantes)}. L'ancien dataset reste actif."
-                else:
+                message_erreur = valider_dataset_uploade(df_uploade)
+                if message_erreur is None:
                     definir_dataset_actif(df_uploade, fichier.filename)
-                    message_succes = f"Dataset personnalisé chargé : {fichier.filename} ({len(df_uploade)} lignes) — actif sur toute la plateforme."
+                    session['message_upload_succes'] = (
+                        f"Dataset chargé : {fichier.filename} ({len(df_uploade)} lignes). "
+                        "Il est maintenant utilisé dans toute la plateforme."
+                    )
+                    # Après un import valide, ouvrir directement le tableau de bord.
+                    return redirect(url_for('dashboard'))
             except Exception as e:
                 message_erreur = f"Impossible de lire le fichier : {e}"
 
     return render_template(
         'index.html', stats=stats_accueil(), modules=MODULES,
-        message_erreur=message_erreur, message_succes=message_succes,
+        message_erreur=message_erreur, message_succes=None,
     )
 
 
 PALETTE_SEGMENTS = {
     'Utilisateurs à Risque': '#C62828',
     'Fidèles Engagés': '#2E7D32',
-    'Captifs Insatisfaits': '#FF7900',
+    'Utilisateurs Captifs Insatisfaits': '#FF7900',
     'Fidèles Passifs': '#1565C0',
     'Nouveaux Utilisateurs': '#6A1B9A',
 }
@@ -193,19 +236,23 @@ def calculer_donnees_dashboard(df):
 @app.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
     message_erreur = None
-    message_succes = None
+    message_succes = session.pop('message_upload_succes', None)
 
     if request.method == 'POST':
         fichier = request.files.get('fichier_dataset')
-        if fichier and fichier.filename:
+        if not fichier or not fichier.filename:
+            message_erreur = "Sélectionnez un fichier CSV avant de lancer le chargement."
+        else:
             try:
                 df_uploade = pd.read_csv(fichier)
-                manquantes = [c for c in COLONNES_REQUISES_DATASET if c not in df_uploade.columns]
-                if manquantes:
-                    message_erreur = f"Colonnes manquantes dans le fichier : {', '.join(manquantes)}. L'ancien dataset reste actif."
-                else:
+                message_erreur = valider_dataset_uploade(df_uploade)
+                if message_erreur is None:
                     definir_dataset_actif(df_uploade, fichier.filename)
-                    message_succes = f"Dataset personnalisé chargé : {fichier.filename} ({len(df_uploade)} lignes) — actif sur toute la plateforme."
+                    session['message_upload_succes'] = (
+                        f"Dataset chargé : {fichier.filename} ({len(df_uploade)} lignes). "
+                        "Il est maintenant utilisé dans toute la plateforme."
+                    )
+                    return redirect(url_for('dashboard'))
             except Exception as e:
                 message_erreur = f"Impossible de lire le fichier : {e}"
 
@@ -220,13 +267,151 @@ def dashboard():
 
 import numpy as np
 import shap
+from scipy import sparse
 
 # ══════════════════════════════════════════════════════════════
-# SHAP : explainer créé UNE SEULE FOIS au démarrage (coûteux à
-# recréer à chaque requête)
+# PRÉTRAITEMENT ET SHAP — RÉGRESSION LOGISTIQUE UNIQUEMENT
+# Le pipeline contient déjà StandardScaler + OneHotEncoder.
+# Le background SHAP a été produit avec le préprocesseur final.
 # ══════════════════════════════════════════════════════════════
-EXPLAINER_SHAP = shap.TreeExplainer(DONNEES['modeles']['Random Forest'])
-COLONNES_CLUSTERING = ['sat_globale', 'frequence_usage', 'anciennete_usage', 'perception_frais']
+PIPELINE_LOGISTIQUE = DONNEES['modeles']['Régression Logistique']
+PREPROCESSEUR_LOGISTIQUE = PIPELINE_LOGISTIQUE.named_steps['preprocesseur']
+CLASSIFIEUR_LOGISTIQUE = PIPELINE_LOGISTIQUE.named_steps['clf']
+BACKGROUND_SHAP = np.asarray(DONNEES['shap_background'], dtype=float)
+EXPLAINER_SHAP = shap.LinearExplainer(CLASSIFIEUR_LOGISTIQUE, BACKGROUND_SHAP)
+
+COLONNES_MODELE = DONNEES['metadonnees']['colonnes_modele']
+COLONNES_CATEGORIELLES = DONNEES['metadonnees']['colonnes_categorielles']
+COLONNES_NUMERIQUES = DONNEES['metadonnees']['colonnes_num_scaler']
+COLONNES_CLUSTERING = DONNEES['metadonnees']['colonnes_clustering']
+VALEURS_REFERENCE = DONNEES['metadonnees'].get('valeurs_reference_prediction', {})
+NOMS_FEATURES_SHAP = DONNEES['metadonnees'].get(
+    'variables_transforme_shap', PREPROCESSEUR_LOGISTIQUE.get_feature_names_out().tolist()
+)
+
+MAPPING_MOTIF_FORMULAIRE = {
+    '0': 'Disponibilité des points',
+    '1': 'Fiabilité',
+    '2': 'Habitude',
+    '3': 'Promotions',
+    '4': 'Réseau',
+}
+
+
+def preparer_X_modele(df):
+    """Construit les 21 variables sources attendues par les pipelines.
+
+    Pour un dataset personnalisé incomplet, les variables absentes sont
+    complétées avec les valeurs de référence calculées à l'entraînement.
+    """
+    X = pd.DataFrame(index=df.index)
+    for colonne in COLONNES_MODELE:
+        valeur_ref = VALEURS_REFERENCE.get(colonne, 0)
+        if colonne in df.columns:
+            X[colonne] = df[colonne]
+            X[colonne] = X[colonne].where(X[colonne].notna(), valeur_ref)
+        else:
+            X[colonne] = valeur_ref
+
+    for colonne in COLONNES_CATEGORIELLES:
+        X[colonne] = X[colonne].astype(str).str.strip()
+
+    for colonne in COLONNES_MODELE:
+        if colonne not in COLONNES_CATEGORIELLES:
+            X[colonne] = pd.to_numeric(X[colonne], errors='coerce')
+            X[colonne] = X[colonne].fillna(VALEURS_REFERENCE.get(colonne, 0))
+
+    return X[COLONNES_MODELE]
+
+
+def transformer_pour_shap(X):
+    matrice = PREPROCESSEUR_LOGISTIQUE.transform(X)
+    if sparse.issparse(matrice):
+        matrice = matrice.toarray()
+    return np.asarray(matrice, dtype=float)
+
+
+def extraire_shap_classe_fidele(matrice_transformee):
+    """Retourne les valeurs SHAP de la classe 1 (fidèles déclarés)."""
+    valeurs = EXPLAINER_SHAP.shap_values(matrice_transformee)
+    if isinstance(valeurs, list):
+        valeurs = valeurs[1] if len(valeurs) > 1 else valeurs[0]
+    valeurs = np.asarray(valeurs)
+    if valeurs.ndim == 3:
+        if valeurs.shape[-1] == 2:
+            valeurs = valeurs[:, :, 1]
+        elif valeurs.shape[0] == 2:
+            valeurs = valeurs[1]
+        else:
+            raise ValueError(f"Format SHAP inattendu : {valeurs.shape}")
+    if valeurs.ndim != 2:
+        raise ValueError(f"Format SHAP inattendu : {valeurs.shape}")
+    return valeurs
+
+
+def regrouper_shap_par_variable(valeurs_shap):
+    """Regroupe les modalités One-Hot en contributions par variable source."""
+    mapping = []
+    for nom in NOMS_FEATURES_SHAP:
+        nom = str(nom)
+        if '__' in nom:
+            transformateur, variable_transformee = nom.split('__', 1)
+        else:
+            transformateur, variable_transformee = '', nom
+
+        if transformateur == 'nominales':
+            source = next(
+                (c for c in COLONNES_CATEGORIELLES
+                 if variable_transformee.startswith(c + '_')),
+                variable_transformee
+            )
+        else:
+            source = variable_transformee
+        mapping.append(source)
+
+    resultat = np.zeros((valeurs_shap.shape[0], len(COLONNES_MODELE)), dtype=float)
+    for j, variable in enumerate(COLONNES_MODELE):
+        indices = [i for i, source in enumerate(mapping) if source == variable]
+        if indices:
+            resultat[:, j] = valeurs_shap[:, indices].sum(axis=1)
+    return resultat
+
+
+def construire_entree_prediction(donnees_form):
+    """Construit le profil du formulaire dans le format brut du pipeline."""
+    entree = dict(VALEURS_REFERENCE)
+
+    champs_ordinaux = [
+        'tranche_age', 'anciennete_usage', 'frequence_usage',
+        'sat_globale', 'perception_frais'
+    ]
+    for champ in champs_ordinaux:
+        entree[champ] = int(donnees_form.get(champ, entree.get(champ, 1)))
+
+    motif = str(donnees_form.get('motif_principal', '1'))
+    entree['motif_principal'] = MAPPING_MOTIF_FORMULAIRE.get(motif, motif)
+    entree['presence_probleme'] = int(donnees_form.get('presence_probleme', 0))
+
+    colonnes_pb = [c for c in COLONNES_MODELE if c.startswith('pb_')]
+    if entree['presence_probleme'] == 0:
+        for c in colonnes_pb:
+            entree[c] = 1 if c == 'pb_aucun' else 0
+    else:
+        entree['pb_aucun'] = 0
+        for c in colonnes_pb:
+            if c != 'pb_aucun':
+                entree[c] = int(VALEURS_REFERENCE.get(c, 0))
+
+    # Les cases « utilise Orange Money » et « utilise Wave » sont conservées
+    # dans l'interface historique, mais ne font pas partie des 21 prédicteurs.
+    X = pd.DataFrame([{c: entree.get(c, VALEURS_REFERENCE.get(c, 0))
+                       for c in COLONNES_MODELE}], columns=COLONNES_MODELE)
+    for c in COLONNES_CATEGORIELLES:
+        X[c] = X[c].astype(str).str.strip()
+    for c in COLONNES_MODELE:
+        if c not in COLONNES_CATEGORIELLES:
+            X[c] = pd.to_numeric(X[c], errors='coerce').fillna(0)
+    return X
 
 
 @app.route('/prediction')
@@ -236,77 +421,57 @@ def prediction():
 
 @app.route('/api/predire', methods=['POST'])
 def api_predire():
-    from flask import request, jsonify
-    import pandas as pd
+    from flask import jsonify
 
-    donnees_form = request.get_json()
+    donnees_form = request.get_json(silent=True) or {}
+    try:
+        X_utilisateur = construire_entree_prediction(donnees_form)
 
-    colonnes_modele = DONNEES['metadonnees']['colonnes_modele']
-    cols_num = DONNEES['metadonnees']['colonnes_num_scaler']
-    noms_clusters = DONNEES['metadonnees']['noms_clusters']
+        # Le pipeline effectue lui-même standardisation et One-Hot Encoding.
+        modele_principal = DONNEES['modeles']['Régression Logistique']
+        probabilites = modele_principal.predict_proba(X_utilisateur)[0]
+        classes = list(modele_principal.classes_)
+        proba_fidele = float(probabilites[classes.index(1)])
+        proba_churn = 1.0 - proba_fidele
+        classe_predite = int(modele_principal.predict(X_utilisateur)[0])
+        prediction_label = 'Fidèle' if classe_predite == 1 else 'Churner (à risque)'
 
-    # ── Construction du vecteur d'entrée (0 par défaut pour les
-    # colonnes secondaires non couvertes par le formulaire) ──────
-    entree = {col: 0 for col in colonnes_modele}
-    entree.update({
-        'tranche_age': int(donnees_form['tranche_age']),
-        'anciennete_usage': int(donnees_form['anciennete_usage']),
-        'frequence_usage': int(donnees_form['frequence_usage']),
-        'sat_globale': int(donnees_form['sat_globale']),
-        'perception_frais': int(donnees_form['perception_frais']),
-        'utilise_orange_money': int(donnees_form['utilise_orange_money']),
-        'wave_usage': int(donnees_form['wave_usage']),
-        'presence_probleme': int(donnees_form['presence_probleme']),
-        'motif_principal': int(donnees_form['motif_principal']),
-    })
+        if proba_churn > 0.7:
+            niveau_risque = 'eleve'
+        elif proba_churn > 0.4:
+            niveau_risque = 'modere'
+        else:
+            niveau_risque = 'faible'
 
-    X_utilisateur = pd.DataFrame([entree])[colonnes_modele]
-    X_utilisateur_sc = X_utilisateur.copy()
-    X_utilisateur_sc[cols_num] = DONNEES['scaler'].transform(X_utilisateur[cols_num])
+        # Affectation K-Means avec le scaler propre à la segmentation.
+        X_cluster = X_utilisateur[COLONNES_CLUSTERING].astype(float)
+        X_cluster_sc = DONNEES['scaler_cluster'].transform(X_cluster)
+        cluster_utilisateur = int(DONNEES['kmeans'].predict(X_cluster_sc)[0])
+        nom_cluster = DONNEES['metadonnees']['noms_clusters'][str(cluster_utilisateur)]
 
-    # ── Prédiction (Régression Logistique, meilleur AUC-ROC) ────
-    modele_principal = DONNEES['modeles']['Régression Logistique']
-    proba_fidele = float(modele_principal.predict_proba(X_utilisateur_sc)[0, 1])
-    proba_churn = 1 - proba_fidele
-    prediction_label = "Fidèle" if proba_fidele >= 0.5 else "Churner (à risque)"
+        # SHAP de la régression logistique, regroupé sur les 21 variables sources.
+        X_transforme = transformer_pour_shap(X_utilisateur)
+        shap_brut = extraire_shap_classe_fidele(X_transforme)
+        shap_groupe = regrouper_shap_par_variable(shap_brut)[0]
+        contributions = sorted(
+            zip(COLONNES_MODELE, [float(v) for v in shap_groupe]),
+            key=lambda x: abs(x[1]), reverse=True
+        )[:8]
+        contributions = sorted(contributions, key=lambda x: x[1])
 
-    if proba_churn > 0.7:
-        niveau_risque = "eleve"
-    elif proba_churn > 0.4:
-        niveau_risque = "modere"
-    else:
-        niveau_risque = "faible"
-
-    # ── Segment K-Means ────────────────────────────────────────
-    X_cluster = X_utilisateur[COLONNES_CLUSTERING].copy()
-    X_cluster[COLONNES_CLUSTERING] = DONNEES['scaler_cluster'].transform(X_cluster)
-    cluster_utilisateur = int(DONNEES['kmeans'].predict(X_cluster)[0])
-    nom_cluster = noms_clusters[str(cluster_utilisateur)]
-
-    # ── Explication SHAP individuelle ───────────────────────────
-    shap_brut = EXPLAINER_SHAP.shap_values(X_utilisateur_sc)
-    if isinstance(shap_brut, list):
-        shap_val = shap_brut[1][0]
-    elif isinstance(shap_brut, np.ndarray) and shap_brut.ndim == 3:
-        shap_val = shap_brut[0, :, 1]
-    else:
-        shap_val = shap_brut[0]
-
-    contributions = sorted(
-        zip(colonnes_modele, [float(v) for v in shap_val]),
-        key=lambda x: abs(x[1]), reverse=True
-    )[:8]
-    contributions = sorted(contributions, key=lambda x: x[1])  # tri pour affichage barre
-
-    return jsonify({
-        'prediction': prediction_label,
-        'proba_fidele': round(proba_fidele * 100, 1),
-        'proba_churn': round(proba_churn * 100, 1),
-        'niveau_risque': niveau_risque,
-        'segment': nom_cluster,
-        'shap_labels': [c[0] for c in contributions],
-        'shap_valeurs': [round(c[1], 4) for c in contributions],
-    })
+        return jsonify({
+            'prediction': prediction_label,
+            'proba_fidele': round(proba_fidele * 100, 1),
+            'proba_churn': round(proba_churn * 100, 1),
+            'niveau_risque': niveau_risque,
+            'segment': nom_cluster,
+            'shap_labels': [c[0] for c in contributions],
+            'shap_valeurs': [round(c[1], 4) for c in contributions],
+            'message_interpretation': 'Contributions SHAP de la régression logistique vers la fidélité déclarée (classe 1).',
+        })
+    except Exception as erreur:
+        app.logger.exception('Erreur lors de la prédiction individuelle')
+        return jsonify({'erreur': f'Impossible de calculer la prédiction : {erreur}'}), 400
 
 COLONNES_RADAR = ['sat_globale', 'frequence_usage', 'anciennete_usage', 'perception_frais', 'fidelite']
 LABELS_RADAR = ['Satisfaction', "Fréquence d'usage", 'Ancienneté', 'Perception des frais', 'Taux de fidélité']
@@ -411,40 +576,29 @@ def couleur_correlation(val):
 @app.route('/facteurs')
 def facteurs():
     df = obtenir_dataset_actif().copy()
-    colonnes_modele = DONNEES['metadonnees']['colonnes_modele']
-    cols_num = DONNEES['metadonnees']['colonnes_num_scaler']
+    X = preparer_X_modele(df)
 
-    # ── Préparation de X dans l'ordre exact attendu par le modèle ──
-    X = pd.DataFrame(index=df.index)
-    for c in colonnes_modele:
-        X[c] = df[c] if c in df.columns else 0
-    X_sc = X.copy()
-    X_sc[cols_num] = DONNEES['scaler'].transform(X[cols_num])
-
-    # ── SHAP global ──────────────────────────────────────────────
-    shap_brut = EXPLAINER_SHAP.shap_values(X_sc)
-    if isinstance(shap_brut, list):
-        shap_vals = shap_brut[1]
-    elif isinstance(shap_brut, np.ndarray) and shap_brut.ndim == 3:
-        shap_vals = shap_brut[:, :, 1]
-    else:
-        shap_vals = shap_brut
-
-    importance_shap = np.abs(shap_vals).mean(axis=0)
+    # SHAP global : régression logistique, puis regroupement des modalités OHE.
+    X_transforme = transformer_pour_shap(X)
+    shap_brut = extraire_shap_classe_fidele(X_transforme)
+    shap_groupe = regrouper_shap_par_variable(shap_brut)
+    importance_shap = np.abs(shap_groupe).mean(axis=0)
     ordre = np.argsort(importance_shap)[::-1][:15]
-    shap_labels = [colonnes_modele[i] for i in ordre][::-1]
+    shap_labels = [COLONNES_MODELE[i] for i in ordre][::-1]
     shap_valeurs = [round(float(importance_shap[i]), 4) for i in ordre][::-1]
 
-    # ── Importance Random Forest (Gini) ─────────────────────────
-    rf = DONNEES['modeles']['Random Forest']
-    importances_rf = rf.feature_importances_
-    mediane_rf = float(np.median(importances_rf))
-    ordre_rf = np.argsort(importances_rf)[::-1][:15]
-    rf_labels = [colonnes_modele[i] for i in ordre_rf][::-1]
-    rf_valeurs = [round(float(importances_rf[i]), 4) for i in ordre_rf][::-1]
-    rf_couleurs = [('#2E7D32' if importances_rf[i] >= mediane_rf else '#C62828') for i in ordre_rf][::-1]
+    # Importance par permutation de la régression logistique (F1 de la classe 0),
+    # moyenne calculée sur les 50 plis externes de validation croisée.
+    importance_df = DONNEES['importance_permutation'].copy()
+    importance_df = importance_df.sort_values('importance_moyenne', ascending=False).head(15)
+    permutation_labels = importance_df['variable'].astype(str).tolist()[::-1]
+    permutation_valeurs = [round(float(v), 4) for v in importance_df['importance_moyenne'].tolist()][::-1]
+    permutation_couleurs = [
+        '#2E7D32' if v >= 0 else '#C62828'
+        for v in importance_df['importance_moyenne'].tolist()
+    ][::-1]
 
-    # ── Corrélations de Spearman (heatmap en CSS) ───────────────
+    # Corrélations de Spearman conservées comme dans la version précédente.
     variables_disponibles = ['sat_globale', 'perception_frais', 'frequence_usage',
                               'anciennete_usage', 'tranche_age', 'fidelite']
     labels_fr = {'sat_globale': 'Satisfaction', 'perception_frais': 'Frais',
@@ -465,7 +619,9 @@ def facteurs():
     return render_template(
         'facteurs.html',
         shap_labels=shap_labels, shap_valeurs=shap_valeurs,
-        rf_labels=rf_labels, rf_valeurs=rf_valeurs, rf_couleurs=rf_couleurs,
+        permutation_labels=permutation_labels,
+        permutation_valeurs=permutation_valeurs,
+        permutation_couleurs=permutation_couleurs,
         heatmap=heatmap, labels_colonnes_corr=labels_colonnes_corr,
     )
 
@@ -492,7 +648,7 @@ RECOMMANDATIONS = {
             "Enquête légère pour comprendre le frein à l'usage régulier",
         ],
     },
-    'Captifs Insatisfaits': {
+    'Utilisateurs Captifs Insatisfaits': {
         'icone': 'bi-lightning-charge-fill',
         'diagnostic': "Usage fréquent MAIS satisfaction très faible — un profil à risque de départ malgré une fidélité apparente.",
         'objectif': "Traiter en priorité l'insatisfaction avant qu'elle ne se traduise en churn.",
@@ -556,19 +712,14 @@ def recommandations():
 @app.route('/alertes')
 def alertes():
     df = obtenir_dataset_actif().copy()
-    colonnes_modele = DONNEES['metadonnees']['colonnes_modele']
-    cols_num = DONNEES['metadonnees']['colonnes_num_scaler']
     noms_clusters = DONNEES['metadonnees']['noms_clusters']
 
-    # ── Préparation de X et calcul du score de risque pour tous ──
-    X = pd.DataFrame(index=df.index)
-    for c in colonnes_modele:
-        X[c] = df[c] if c in df.columns else 0
-    X_sc = X.copy()
-    X_sc[cols_num] = DONNEES['scaler'].transform(X[cols_num])
-
+    # Le pipeline de régression logistique applique lui-même le prétraitement.
+    X = preparer_X_modele(df)
     modele = DONNEES['modeles']['Régression Logistique']
-    proba_fidele = modele.predict_proba(X_sc)[:, 1]
+    probabilites = modele.predict_proba(X)
+    classes = list(modele.classes_)
+    proba_fidele = probabilites[:, classes.index(1)]
     proba_churn = 1 - proba_fidele
 
     df_resultat = df.copy()
@@ -590,7 +741,7 @@ def alertes():
     nb_faible = int((df_resultat['Niveau'] == 'faible').sum())
 
     # ── Alerte prioritaire : Captifs Insatisfaits en alerte rouge ──
-    captifs_risque = df_resultat[(df_resultat['Segment'] == 'Captifs Insatisfaits') & (df_resultat['Niveau'] == 'eleve')]
+    captifs_risque = df_resultat[(df_resultat['Segment'] == 'Utilisateurs Captifs Insatisfaits') & (df_resultat['Niveau'] == 'eleve')]
 
     lignes = []
     for _, row in df_resultat.iterrows():

@@ -11,12 +11,12 @@
 
 <!-- ── Chargement d'un dataset personnalisé (point d'entrée principal) ── -->
 <div class="carte-metrique text-start mb-4">
-    <form method="POST" enctype="multipart/form-data" class="row g-2 align-items-end">
+    <form method="POST" action="{{ url_for('accueil') }}" enctype="multipart/form-data" class="row g-2 align-items-end">
         <div class="col-md-8">
             <label class="form-label small mb-1">
-                <i class="bi bi-upload"></i> Charger votre propre dataset (même format) — sinon le dataset par défaut (642 utilisateurs) est utilisé
+                <i class="bi bi-upload"></i> Charger un dataset CSV préparé au même format que le dataset de référence 
             </label>
-            <input type="file" name="fichier_dataset" accept=".csv" class="form-control form-control-sm">
+            <input type="file" name="fichier_dataset" accept=".csv,text/csv" class="form-control form-control-sm" required>
         </div>
         <div class="col-md-4">
             <button type="submit" class="btn btn-om w-100">

@@ -1,54 +1,84 @@
 """
-Chargement des modèles ML, du scaler, de K-Means, des encodeurs et
-du dataset. Chargé UNE SEULE FOIS au démarrage de l'application
-(pas à chaque requête), pour des performances optimales.
+Chargement des pipelines supervisés, de K-Means, du background SHAP,
+des importances et du dataset actualisé (628 utilisateurs).
+Les pipelines contiennent leur propre prétraitement : aucune standardisation
+ou aucun encodage manuel supplémentaire ne doit être appliqué dans Flask.
 """
 
-import os
+from pathlib import Path
 import json
+
 import joblib
 import pandas as pd
 
-RACINE = os.path.dirname(os.path.abspath(__file__))
-DOSSIER_MODELES = os.path.join(RACINE, 'models')
-DOSSIER_DATA = os.path.join(RACINE, 'data')
+BASE_DIR = Path(__file__).resolve().parent
+MODELS_DIR = BASE_DIR / "models"
+DATA_DIR = BASE_DIR / "data"
 
-
-def _charger_json(nom_fichier):
-    chemin = os.path.join(DOSSIER_MODELES, nom_fichier)
-    with open(chemin, 'r', encoding='utf-8') as f:
-        return json.load(f)
+FICHIERS_MODELES = {
+    "Régression Logistique": "regression_logistique.pkl",
+    "Arbre de Décision": "arbre_de_decision.pkl",
+    "Random Forest": "random_forest.pkl",
+    "SVM": "svm.pkl",
+    "XGBoost": "xgboost.pkl",
+}
 
 
 def charger_tout():
-    """Charge tous les artefacts nécessaires et les retourne dans un
-    dictionnaire unique. À appeler une seule fois au démarrage de
-    l'app (voir app.py)."""
+    """Charge une seule fois tous les artefacts produits par train_models_628.py."""
+    modeles = {}
+    for nom, fichier in FICHIERS_MODELES.items():
+        chemin = MODELS_DIR / fichier
+        if not chemin.exists():
+            raise FileNotFoundError(f"Modèle introuvable : {chemin}")
+        modeles[nom] = joblib.load(chemin)
 
-    modeles = {
-        'Régression Logistique': joblib.load(os.path.join(DOSSIER_MODELES, 'regression_logistique.pkl')),
-        'Arbre de Décision': joblib.load(os.path.join(DOSSIER_MODELES, 'arbre_de_decision.pkl')),
-        'Random Forest': joblib.load(os.path.join(DOSSIER_MODELES, 'random_forest.pkl')),
-        'SVM': joblib.load(os.path.join(DOSSIER_MODELES, 'svm.pkl')),
-        'XGBoost': joblib.load(os.path.join(DOSSIER_MODELES, 'xgboost.pkl')),
-    }
+    fichiers_requis = [
+        MODELS_DIR / "kmeans.pkl",
+        MODELS_DIR / "scaler_cluster.pkl",
+        MODELS_DIR / "shap_background_logistique.pkl",
+        MODELS_DIR / "metadonnees.json",
+        MODELS_DIR / "importance_permutation_logistique.csv",
+        MODELS_DIR / "synthese_performances.csv",
+        DATA_DIR / "dataset_complet.csv",
+    ]
+    absents = [str(p) for p in fichiers_requis if not p.exists()]
+    if absents:
+        raise FileNotFoundError(
+            "Artefacts de la mise à jour 628 manquants :\n- " + "\n- ".join(absents)
+        )
 
-    scaler = joblib.load(os.path.join(DOSSIER_MODELES, 'scaler.pkl'))
-    kmeans = joblib.load(os.path.join(DOSSIER_MODELES, 'kmeans.pkl'))
-    scaler_cluster = joblib.load(os.path.join(DOSSIER_MODELES, 'scaler_cluster.pkl'))
-    encodeurs = joblib.load(os.path.join(DOSSIER_MODELES, 'encodeurs_complet.pkl'))
-    metadonnees = _charger_json('metadonnees.json')
+    kmeans = joblib.load(MODELS_DIR / "kmeans.pkl")
+    scaler_cluster = joblib.load(MODELS_DIR / "scaler_cluster.pkl")
+    shap_background = joblib.load(MODELS_DIR / "shap_background_logistique.pkl")
 
-    dataset = pd.read_csv(os.path.join(DOSSIER_DATA, 'dataset_complet.csv'))
+    with open(MODELS_DIR / "metadonnees.json", "r", encoding="utf-8") as f:
+        metadonnees = json.load(f)
 
-    print("✓ Modèles, scaler, K-Means, encodeurs et dataset chargés avec succès.")
+    dataset = pd.read_csv(DATA_DIR / "dataset_complet.csv")
+    importance_permutation = pd.read_csv(
+        MODELS_DIR / "importance_permutation_logistique.csv"
+    )
+    synthese_performances = pd.read_csv(
+        MODELS_DIR / "synthese_performances.csv"
+    )
+
+    if len(dataset) != 628:
+        raise ValueError(
+            f"Le dataset chargé doit contenir 628 utilisateurs ; trouvé : {len(dataset)}."
+        )
+    if "fidelite" not in dataset.columns or "cluster" not in dataset.columns:
+        raise ValueError("Le dataset doit contenir les colonnes fidelite et cluster.")
+
+    print("✓ Cinq pipelines, K-Means, background SHAP, métriques et dataset 628 chargés.")
 
     return {
-        'modeles': modeles,
-        'scaler': scaler,
-        'kmeans': kmeans,
-        'scaler_cluster': scaler_cluster,
-        'encodeurs': encodeurs,
-        'metadonnees': metadonnees,
-        'dataset': dataset,
+        "modeles": modeles,
+        "kmeans": kmeans,
+        "scaler_cluster": scaler_cluster,
+        "shap_background": shap_background,
+        "importance_permutation": importance_permutation,
+        "synthese_performances": synthese_performances,
+        "metadonnees": metadonnees,
+        "dataset": dataset,
     }

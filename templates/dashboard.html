@@ -11,12 +11,12 @@
 
 <!-- ── Chargement d'un dataset personnalisé ── -->
 <div class="carte-metrique text-start mb-4">
-    <form method="POST" enctype="multipart/form-data" class="row g-2 align-items-end">
+    <form method="POST" action="{{ url_for('dashboard') }}" enctype="multipart/form-data" class="row g-2 align-items-end">
         <div class="col-md-8">
             <label class="form-label small mb-1">
-                <i class="bi bi-upload"></i> Charger un autre dataset (même format que le fichier par défaut)
+                <i class="bi bi-upload"></i> Charger un dataset CSV préparé au même format que le dataset de référence (23 colonnes)
             </label>
-            <input type="file" name="fichier_dataset" accept=".csv" class="form-control form-control-sm">
+            <input type="file" name="fichier_dataset" accept=".csv,text/csv" class="form-control form-control-sm" required>
         </div>
         <div class="col-md-4">
             <button type="submit" class="btn btn-om w-100">
@@ -24,6 +24,7 @@
             </button>
         </div>
     </form>
+    <div class="small text-muted mt-2">Dataset actif : <strong>{{ stats.nb_utilisateurs }}</strong> utilisateurs. Le fichier doit contenir les 21 variables, la colonne <code>fidelite</code> et la colonne <code>cluster</code> (identifiants 0 à 4).</div>
     {% if message_succes %}
         <div class="alert alert-success mt-2 mb-0 py-2 small">{{ message_succes }}</div>
     {% endif %}
@@ -43,7 +44,7 @@
     </div>
     <div class="col-6 col-md-3">
         <div class="carte-metrique vert">
-            <div class="icone"><i class="bi bi-heart-fill" style="color:#2E7D32;"></i></div>
+            <div class="icone"><i class="bi bi-heart-fill" style="color:#176B50;"></i></div>
             <div class="valeur">{{ stats.taux_fidelite }}%</div>
             <div class="label">Taux de fidélité</div>
         </div>
@@ -57,7 +58,7 @@
     </div>
     <div class="col-6 col-md-3">
         <div class="carte-metrique rouge">
-            <div class="icone"><i class="bi bi-exclamation-triangle-fill" style="color:#C62828;"></i></div>
+            <div class="icone"><i class="bi bi-exclamation-triangle-fill" style="color:#B54747;"></i></div>
             <div class="valeur">{{ stats.nb_churners }}</div>
             <div class="label">Churners</div>
         </div>
@@ -68,7 +69,7 @@
 <div class="row g-3 mb-4">
     <div class="col-md-6">
         <div class="carte-metrique text-start">
-            <h5 class="mb-3"><i class="bi bi-pie-chart-fill" style="color:#2E7D32;"></i> Répartition Fidèles / Churners</h5>
+            <h5 class="mb-3"><i class="bi bi-pie-chart-fill" style="color:#176B50;"></i> Répartition Fidèles / Churners</h5>
             <div class="chart-container">
                 <canvas id="chartFidelite"></canvas>
             </div>
@@ -172,8 +173,8 @@ new Chart(document.getElementById('chartSatisfaction'), {
     data: {
         labels: distSatisfaction.labels,
         datasets: [
-            { label: 'Fidèle', data: distSatisfaction.fideles, backgroundColor: '#2E7D32' },
-            { label: 'Churner', data: distSatisfaction.churners, backgroundColor: '#C62828' }
+            { label: 'Fidèle', data: distSatisfaction.fideles, backgroundColor: '#176B50' },
+            { label: 'Churner', data: distSatisfaction.churners, backgroundColor: '#B54747' }
         ]
     },
     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
@@ -185,8 +186,8 @@ new Chart(document.getElementById('chartFrais'), {
     data: {
         labels: distFrais.labels,
         datasets: [
-            { label: 'Fidèle', data: distFrais.fideles, backgroundColor: '#2E7D32' },
-            { label: 'Churner', data: distFrais.churners, backgroundColor: '#C62828' }
+            { label: 'Fidèle', data: distFrais.fideles, backgroundColor: '#176B50' },
+            { label: 'Churner', data: distFrais.churners, backgroundColor: '#B54747' }
         ]
     },
     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }

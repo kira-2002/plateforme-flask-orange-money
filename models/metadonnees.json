@@ -1,17 +1,49 @@
 {
+  "version_schema": "628_v1",
+  "date_entrainement": "2026-11-08T19:02:38",
+  "n_observations": 628,
+  "distribution_cible": {
+    "0": 55,
+    "1": 573
+  },
   "colonnes_modele": [
     "tranche_age",
     "sexe",
     "situation_professionnelle",
-    "utilise_orange_money",
     "anciennete_usage",
     "frequence_usage",
     "sat_globale",
     "perception_frais",
     "presence_probleme",
-    "wave_usage",
     "operateur_prefere",
     "motif_principal",
+    "pb_aucun",
+    "pb_autre",
+    "pb_lenteur",
+    "pb_probleme_de_reseau",
+    "pb_service_client",
+    "pb_transaction_echouee",
+    "serv_achat_de_credit",
+    "serv_paiement_de_factures",
+    "serv_paiement_marchand",
+    "serv_reception_dargent",
+    "serv_transfert_dargent"
+  ],
+  "colonnes_num_scaler": [
+    "tranche_age",
+    "anciennete_usage",
+    "frequence_usage",
+    "sat_globale",
+    "perception_frais"
+  ],
+  "colonnes_categorielles": [
+    "sexe",
+    "situation_professionnelle",
+    "operateur_prefere",
+    "motif_principal"
+  ],
+  "colonnes_binaires_passthrough": [
+    "presence_probleme",
     "pb_aucun",
     "pb_autre",
     "pb_lenteur",
@@ -30,30 +62,133 @@
     "anciennete_usage",
     "perception_frais"
   ],
-  "colonnes_num_scaler": [
-    "tranche_age",
-    "anciennete_usage",
-    "frequence_usage",
-    "sat_globale",
-    "perception_frais"
-  ],
-  "imputation": {
-    "tranche_age": 2,
-    "anciennete_usage": 4,
-    "frequence_usage": 1,
-    "sat_globale": 3,
-    "perception_frais": 3,
-    "sexe": 1,
-    "situation_professionnelle": 5,
-    "operateur_prefere": 2,
-    "motif_principal": 1
-  },
   "noms_clusters": {
     "0": "Utilisateurs à Risque",
     "1": "Fidèles Engagés",
-    "2": "Captifs Insatisfaits",
-    "3": "Fidèles Passifs",
-    "4": "Nouveaux Utilisateurs"
+    "2": "Nouveaux Utilisateurs",
+    "3": "Utilisateurs Captifs Insatisfaits",
+    "4": "Fidèles Passifs"
   },
-  "k_optimal": 5
+  "effectifs_clusters": {
+    "0": 151,
+    "1": 155,
+    "2": 64,
+    "3": 89,
+    "4": 169
+  },
+  "k_optimal": 5,
+  "silhouette_kmeans": 0.33116187973846334,
+  "valeurs_reference_prediction": {
+    "tranche_age": 2,
+    "sexe": "Homme",
+    "situation_professionnelle": "Étudiant",
+    "anciennete_usage": 4,
+    "frequence_usage": 1,
+    "sat_globale": 4,
+    "perception_frais": 3,
+    "presence_probleme": 0,
+    "operateur_prefere": "Wave",
+    "motif_principal": "Fiabilité",
+    "pb_aucun": 0,
+    "pb_autre": 0,
+    "pb_lenteur": 0,
+    "pb_probleme_de_reseau": 0,
+    "pb_service_client": 0,
+    "pb_transaction_echouee": 0,
+    "serv_achat_de_credit": 1,
+    "serv_paiement_de_factures": 0,
+    "serv_paiement_marchand": 0,
+    "serv_reception_dargent": 1,
+    "serv_transfert_dargent": 1
+  },
+  "parametres_finaux": {
+    "Régression Logistique": {
+      "fichier": "regression_logistique.pkl",
+      "meilleurs_parametres": {
+        "clf__C": 10
+      },
+      "meilleur_f1_cv_interne_classe0": 0.35494505494505496
+    },
+    "Arbre de Décision": {
+      "fichier": "arbre_de_decision.pkl",
+      "meilleurs_parametres": {
+        "clf__max_depth": null,
+        "clf__min_samples_leaf": 1
+      },
+      "meilleur_f1_cv_interne_classe0": 0.24491063899930895
+    },
+    "Random Forest": {
+      "fichier": "random_forest.pkl",
+      "meilleurs_parametres": {
+        "clf__max_depth": null,
+        "clf__n_estimators": 100
+      },
+      "meilleur_f1_cv_interne_classe0": 0.18075161553422422
+    },
+    "SVM": {
+      "fichier": "svm.pkl",
+      "meilleurs_parametres": {
+        "clf__C": 10,
+        "clf__gamma": "scale"
+      },
+      "meilleur_f1_cv_interne_classe0": 0.20288660926406568
+    },
+    "XGBoost": {
+      "fichier": "xgboost.pkl",
+      "meilleurs_parametres": {
+        "clf__max_depth": 5,
+        "clf__n_estimators": 100
+      },
+      "meilleur_f1_cv_interne_classe0": 0.25615763546798026
+    }
+  },
+  "variables_transforme_shap": [
+    "numeriques__tranche_age",
+    "numeriques__anciennete_usage",
+    "numeriques__frequence_usage",
+    "numeriques__sat_globale",
+    "numeriques__perception_frais",
+    "nominales__sexe_Femme",
+    "nominales__sexe_Homme",
+    "nominales__sexe_Je ne souhaite pas le préciser",
+    "nominales__situation_professionnelle_Autre",
+    "nominales__situation_professionnelle_Commerçant",
+    "nominales__situation_professionnelle_Entrepreneur",
+    "nominales__situation_professionnelle_Salarié",
+    "nominales__situation_professionnelle_Sans emploi",
+    "nominales__situation_professionnelle_Étudiant",
+    "nominales__operateur_prefere_Les deux autant",
+    "nominales__operateur_prefere_Orange Money",
+    "nominales__operateur_prefere_Wave",
+    "nominales__motif_principal_Disponibilité des points",
+    "nominales__motif_principal_Fiabilité",
+    "nominales__motif_principal_Habitude",
+    "nominales__motif_principal_Promotions",
+    "nominales__motif_principal_Réseau",
+    "remainder__presence_probleme",
+    "remainder__pb_aucun",
+    "remainder__pb_autre",
+    "remainder__pb_lenteur",
+    "remainder__pb_probleme_de_reseau",
+    "remainder__pb_service_client",
+    "remainder__pb_transaction_echouee",
+    "remainder__serv_achat_de_credit",
+    "remainder__serv_paiement_de_factures",
+    "remainder__serv_paiement_marchand",
+    "remainder__serv_reception_dargent",
+    "remainder__serv_transfert_dargent"
+  ],
+  "taille_background_shap": 100,
+  "interpretabilite": {
+    "modele": "Régression Logistique",
+    "shap": "LinearExplainer",
+    "importance_globale": "Permutation importance sur F1 de la classe 0"
+  },
+  "versions": {
+    "python": "3.10.11",
+    "scikit_learn": "1.5.1",
+    "xgboost": "2.1.2",
+    "numpy": "1.26.4",
+    "pandas": "2.0.3"
+  }
 }
